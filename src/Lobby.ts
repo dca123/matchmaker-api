@@ -1,11 +1,13 @@
-export default class Lobby {
-  private radiant: number[];
+import { Player } from './index';
 
-  private dire: number[];
+export default class Lobby {
+  public radiant: Player[];
+
+  private dire: Player[];
 
   public match: number = 5;
 
-  constructor({ radiant, dire }: { radiant: number[]; dire: number[] }) {
+  constructor({ radiant, dire }: { radiant: Player[]; dire: Player[] }) {
     this.radiant = radiant;
     this.dire = dire;
   }
@@ -27,11 +29,11 @@ export default class Lobby {
   }
 
   private invitePlayers(): void {
-    this.radiant.forEach((playerID: number) =>
-      console.log(`Invited player - ${playerID}`)
+    this.radiant.forEach(({ username }) =>
+      console.log(`Invited player - ${username}`)
     );
-    this.dire.forEach((playerID: number) =>
-      console.log(`Invited player - ${playerID}`)
+    this.dire.forEach(({ username }) =>
+      console.log(`Invited player - ${username}`)
     );
   }
 
