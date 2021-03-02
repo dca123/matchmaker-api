@@ -11,7 +11,7 @@ export default function SearchListener(): void {
   const searchIO = io.of('/search');
   searchIO.use((socket: SearchSocket, next) => {
     const { playerID } = socket.handshake.auth;
-    if (playerID == undefined) {
+    if (playerID === undefined) {
       console.log('no player id');
     } else {
       console.log(playerID);
