@@ -22,7 +22,8 @@
       {
         "extensions": [".js", ".jsx", ".ts", ".tsx"]
       }
-    ]
+    ],
+    "no-console": 1
   },
   "settings": {
     "import/resolver": {
