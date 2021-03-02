@@ -1,5 +1,10 @@
-import { Player } from '../index';
+import { randomBytes } from 'crypto';
 import Ticket from './Ticket';
+
+export interface Player {
+  id: string;
+  ready: boolean;
+}
 
 type Team = Array<Player>;
 /**
@@ -14,16 +19,16 @@ const ticketsToTeam = (tickets: Ticket[]): Team =>
   }));
 
 export default class Lobby {
-  public radiant: Player[];
+  private radiant: Player[];
 
   private dire: Player[];
 
-  public lobbyID: number = 5;
+  public lobbyID: string;
 
   constructor(tickets: Ticket[]) {
     this.radiant = ticketsToTeam(tickets.slice(0, 5));
     this.dire = ticketsToTeam(tickets.slice(5));
-    this.lobbyID = Math.floor(Math.random() * 200);
+    this.lobbyID = randomBytes(32).toString('hex');
   }
 
   // Create Lobby

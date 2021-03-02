@@ -11,10 +11,12 @@ export default class SearchQueue {
 
   public enqueue(playerID: string): string {
     if (!this.playerToTicketIDs.hasPlayerID(playerID)) {
-      const { ticketID } = new Ticket(playerID);
-      this.queue = [...this.queue, ticketID];
-      this.playerToTicketIDs.set(playerID, ticketID);
-      return ticketID;
+      const newTicket = new Ticket(playerID);
+      this.queue = [...this.queue, newTicket.ticketID];
+      this.playerToTicketIDs.set(playerID, newTicket.ticketID);
+      this.ticketMap.set(newTicket.ticketID, newTicket);
+      console.log(this.playerToTicketIDs);
+      return newTicket.ticketID;
     }
     throw new Error(`Player ${playerID} is already in the queue`);
   }
@@ -27,17 +29,18 @@ export default class SearchQueue {
     return dequeuedTicketsIDs.map((ticketID) => this.ticketMap.get(ticketID));
   }
 
-  public createLobby(): Lobby | false {
+  public createLobby(): [Lobby, Ticket[]] | [false] {
     // Meet conditions
     if (this.queue.length >= 10) {
       const lobbyTickets = this.dequeue();
       const newLobby = new Lobby(lobbyTickets);
-      return newLobby;
+      return [newLobby, lobbyTickets];
     }
-    return false;
+    return [false];
   }
 
   public peek(): Ticket {
+    console.log(this.ticketMap);
     return this.ticketMap.get(this.queue[0]);
   }
 

@@ -16,12 +16,12 @@ export default class PlayerToTicketBiMap {
     return this.TicketMap.get(ticketID);
   }
 
-  public hasPlayerID(ticketID: string): boolean {
-    return this.TicketMap.has(ticketID);
-  }
-
   public getTicket(playerID: string): string {
     return this.PlayerMap.get(playerID);
+  }
+
+  public hasPlayerID(playerID: string): boolean {
+    return this.PlayerMap.has(playerID);
   }
 
   public set(playerID: string, ticketID: string): void {
