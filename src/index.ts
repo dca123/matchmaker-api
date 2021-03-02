@@ -1,9 +1,14 @@
-import { createServer } from 'http';
+import express from 'express';
 import { Server, Socket } from 'socket.io';
-import SearchListener from './listeners/search';
+import { createServer } from 'http';
+import SearchQueue from './libs/SearchQueue';
+import Ticket from './libs/Ticket';
 
-const httpServer = createServer();
-export const io = new Server(httpServer, {
+const port = process.env.PORT ?? 3000;
+const app = express();
+const queue = new SearchQueue();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
   cors: {
     origin: [
       'https://hoppscotch.io',
@@ -14,37 +19,32 @@ export const io = new Server(httpServer, {
     credentials: true,
   },
 });
-export interface Player {
-  id: string;
-  ready: boolean;
-}
-// type LobbySocket = Socket & {
-//   playerID: number;
-//   lobbyID: number;
-// };
+app.use(express.json());
+app.route('/ticket').post((req, res) => {
+  const ticketID = queue.enqueue(req.body.playerID);
+  const response = {
+    tickedID: ticketID,
+  };
+  res.send(response);
+});
+io.on('connection', (socket: Socket) => {
+  socket.on('waitForLobby', (ticketID: string) => {
+    socket.join(ticketID);
+  });
+});
+setInterval(() => {
+  const [lobby, tickets] = queue.createLobby();
+  if (lobby) {
+    console.log('GF');
 
-SearchListener();
-// io.of('/lobby').use((socket: LobbySocket, next) => {
-//   const { playerID, lobbyID } = socket.handshake.auth;
-//   // eslint-disable-next-line no-param-reassign
-//   socket.playerID = playerID;
-//   // eslint-disable-next-line no-param-reassign
-//   socket.lobbyID = lobbyID;
-//   next();
-// });
-// io.of('/lobby').on('connection', (socket: LobbySocket) => {
-//   socket.onAny((data) => {
-//     console.log(data);
-//   });
-//   const lobby = lobbyQueue.get(socket.lobbyID);
-//   console.log(lobbyQueue);
-// socket.join(`${socket.lobbyID}`);
-// io.of('/lobby')
-//   .to(`${socket.lobbyID}`)
-//   .emit('title update', `Starting Games ${socket.lobbyID}`);
+    tickets.forEach((ticket: Ticket) => {
+      io.to(ticket.ticketID).emit('Game Found', lobby.lobbyID);
+    });
+  } else {
+    console.log('Finding GAME');
+  }
+}, 5000);
 
-// io.of('/lobby').to(`${socket.lobbyID}`).emit('progress update', 70);
-// io.of('/lobby').to(`${socket.lobbyID}`).emit('radiant update', lobby.radiant);
-// });
-
-httpServer.listen(8080);
+httpServer.listen(port, () => {
+  console.log(`API listening at http://localhost:${port}`);
+});
