@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "postinstall": "cd node_modules/steam-resources/ && npm install ",
     "dev": "npm run build:live",
     "build": "tsc -p .",
     "build:live": "nodemon --watch 'src/**/*.ts' --exec \"ts-node\" src/app.ts",
@@ -35,8 +36,10 @@
     }
   },
   "dependencies": {
+    "dota2": "^7.0.3",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
-    "socket.io": "^3.1.1"
+    "socket.io": "^3.1.1",
+    "steam": "^1.4.1"
   }
 }
