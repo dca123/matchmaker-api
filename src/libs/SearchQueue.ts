@@ -33,7 +33,7 @@ export default class SearchQueue {
     playerMap: Map<string, Player>
   ): [Lobby, Ticket[]] | [false] {
     // Meet conditions
-    if (this.queue.length >= 1) {
+    if (this.queue.length >= 2) {
       const lobbyTickets = this.dequeue();
       const newLobby = new Lobby(lobbyTickets, playerMap);
       return [newLobby, lobbyTickets];
