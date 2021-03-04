@@ -1,6 +1,7 @@
 import steam from 'steam';
 import dota2 from 'dota2';
 import { Player } from './Lobby';
+import lobbyConfig from '../config';
 
 export default class DotaBot {
   private accountName = 'rookie_matchmaker';
@@ -14,6 +15,10 @@ export default class DotaBot {
   private dota2Client;
 
   private isReady: boolean = false;
+
+  private lobbyReady: boolean = false;
+
+  private lobbyState;
 
   public constructor() {
     this.steamClient = new steam.SteamClient();
@@ -57,12 +62,116 @@ export default class DotaBot {
     });
   }
 
-  public invitePlayers(players: Player[]): void {
-    if (this.isReady) {
-      players.forEach((player) =>
-        this.dota2Client.inviteToParty(player.steamID)
+  public createLobby(): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+      if (this.isReady) {
+        this.dota2Client.createPracticeLobby(lobbyConfig, (err, body) => {
+          if (err) {
+            return reject(new Error(err));
+          }
+          console.log(JSON.stringify(body));
+          this.lobbyReady = true;
+          this.dota2Client.joinPracticeLobbyTeam(1, 4);
+          this.dota2Client.on('practiceLobbyUpdate', (lobby) => {
+            console.log('lobby update message arrived');
+            if (this.lobbyState === undefined) {
+              resolve(true);
+            }
+            this.lobbyState = lobby;
+          });
+        });
+      } else {
+        console.log('DOTA 2 Bot not ready');
+        reject(new Error('DOTA 2 Bot not ready'));
+      }
+    });
+  }
+
+  public waitForReady(players: Player[]): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+      if (this.lobbyState === undefined) {
+        return reject(new Error('Lobby State not Found'));
+      }
+
+      console.log('wait for ready');
+      const lobbyChannel = `Lobby_${this.lobbyState.lobby_id}`;
+      const lobbyChannelType =
+        dota2.schema.DOTAChatChannelType_t.DOTAChannelType_Lobby;
+      this.dota2Client.joinChat(lobbyChannel, lobbyChannelType);
+      this.dota2Client.on('chatMessage', (...chatParams) => {
+        const [, , , chatData] = chatParams;
+        const accountID = chatData.account_id;
+        const chatMessage = chatData.text;
+        const playerReadyState = players.map((player) => {
+          if (
+            player.steamID ===
+              this.dota2Client.ToSteamID(accountID).toString() &&
+            chatMessage === '!ready'
+          ) {
+            const playerInSlot = this.lobbyState.all_members.some(
+              (lobbyPlayer) => {
+                if (
+                  lobbyPlayer.id.toString() === player.steamID &&
+                  lobbyPlayer.slot !== null
+                ) {
+                  return true;
+                  console.log('PLAYER IN SLOT AND READY', player.id);
+                }
+                return false;
+              }
+            );
+            if (playerInSlot) {
+              return {
+                ...player,
+                ready: true,
+              };
+            }
+            console.log('PLAYER IS READY', player.id);
+          }
+          return player;
+        });
+        console.log(playerReadyState);
+        if (playerReadyState.every((player) => player.ready === true)) {
+          return resolve(true);
+        }
+      });
+      return setTimeout(
+        () => reject(new Error('Players not Ready within 20 seconds ! ')),
+        120000
       );
-    }
+    });
+  }
+
+  public invitePlayers(players: Player[]): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+      if (!this.isReady) {
+        console.log('DOTA 2 Bot not ready');
+        return reject(new Error('DOTA 2 Bot not ready'));
+      }
+      if (!this.lobbyReady) {
+        console.log('Lobby not ready');
+        return reject(new Error('Lobby not Ready'));
+      }
+      players.forEach((player) => {
+        this.dota2Client.inviteToLobby(player.steamID);
+        return resolve(true);
+      });
+      return reject(new Error('Something happened Inviting Players !'));
+    });
+  }
+
+  public launchLobby(): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+      if (!this.isReady) {
+        console.log('DOTA 2 Bot not ready');
+        return reject(new Error('DOTA 2 Bot not ready'));
+      }
+      if (!this.lobbyReady) {
+        console.log('Lobby not ready');
+        return reject(new Error('Lobby not Ready'));
+      }
+      this.dota2Client.launchPracticeLobby(() => resolve(true));
+    });
   }
 
   public exit(): void {
