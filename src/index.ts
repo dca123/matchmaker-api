@@ -68,7 +68,7 @@ setInterval(() => {
   } else {
     console.log('Finding GAME');
   }
-}, 5000);
+}, 10000);
 
 httpServer.listen(port, () => {
   console.log(`API listening at http://localhost:${port}`);
