@@ -60,7 +60,7 @@ export default class DotaBot {
   public invitePlayers(players: Player[]): void {
     if (this.isReady) {
       players.forEach((player) =>
-        this.dota2Client.inviteToParty(player.steamId)
+        this.dota2Client.inviteToParty(player.steamID)
       );
     }
   }

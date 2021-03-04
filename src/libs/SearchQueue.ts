@@ -1,6 +1,6 @@
 import Ticket from './Ticket';
 import PlayerToTicketBiMap from './PlayerToTicketBiMap';
-import Lobby from './Lobby';
+import Lobby, { Player } from './Lobby';
 
 export default class SearchQueue {
   private ticketMap: Map<string, Ticket> = new Map();
@@ -29,11 +29,13 @@ export default class SearchQueue {
     return dequeuedTicketsIDs.map((ticketID) => this.ticketMap.get(ticketID));
   }
 
-  public createLobby(): [Lobby, Ticket[]] | [false] {
+  public createLobby(
+    playerMap: Map<string, Player>
+  ): [Lobby, Ticket[]] | [false] {
     // Meet conditions
     if (this.queue.length >= 10) {
       const lobbyTickets = this.dequeue();
-      const newLobby = new Lobby(lobbyTickets);
+      const newLobby = new Lobby(lobbyTickets, playerMap);
       return [newLobby, lobbyTickets];
     }
     return [false];

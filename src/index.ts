@@ -3,11 +3,13 @@ import { Server, Socket } from 'socket.io';
 import { createServer } from 'http';
 import SearchQueue from './libs/SearchQueue';
 import Ticket from './libs/Ticket';
+import { Player } from './libs/Lobby';
 
 const port = process.env.PORT ?? 3000;
 const app = express();
 const queue = new SearchQueue();
 const httpServer = createServer(app);
+const playerMap = new Map<string, Player>();
 const io = new Server(httpServer, {
   cors: {
     origin: [
@@ -21,12 +23,27 @@ const io = new Server(httpServer, {
 });
 [...Array(8).keys()]
   .map((val) => val.toString())
-  .forEach((key) => queue.enqueue(key));
+  .forEach((key) => {
+    queue.enqueue(key);
+    const player: Player = {
+      id: key,
+      ready: true,
+      steamID: 'RANDOM STEAM KEY HERE',
+    };
+    playerMap.set(key, player);
+  });
 // Read JSON body from the request
 app.use(express.json());
 // Create Tickets
 app.route('/ticket').post((req, res) => {
-  const ticketID = queue.enqueue(req.body.playerID);
+  const { playerID, steamID } = req.body;
+  const ticketID = queue.enqueue(playerID);
+  const player: Player = {
+    id: playerID,
+    ready: true,
+    steamID,
+  };
+  playerMap.set(playerID, player);
   const response = {
     tickedID: ticketID,
   };
@@ -37,8 +54,10 @@ io.on('connection', (socket: Socket) => {
     socket.join(ticketID);
   });
 });
+// Constant function to check for Match Created
 setInterval(() => {
-  const [lobby, tickets] = queue.createLobby();
+  // Match Conditions Met
+  const [lobby, tickets] = queue.createLobby(playerMap);
   if (lobby) {
     console.log('GAME FOUND');
     tickets.forEach((ticket: Ticket) => {

@@ -4,8 +4,8 @@ import Ticket from './Ticket';
 
 export interface Player {
   id: string;
-  steamId: string;
   ready: boolean;
+  steamID: string;
 }
 
 type Team = Array<Player>;
@@ -14,13 +14,24 @@ type Team = Array<Player>;
  * @param {Ticket[]} tickets - Array of Tickets
  * @returns {Team}
  */
-const ticketsToTeam = (tickets: Ticket[]): Team =>
-  tickets.map((ticket: Ticket) => ({
-    id: ticket.playerID,
-    ready: true,
-    steamId: '76561198083496791',
-  }));
+const ticketsToTeam = (
+  tickets: Ticket[],
+  playerMap: Map<string, Player>
+): Team =>
+  tickets.map((ticket: Ticket) => {
+    const player = playerMap.get(ticket.playerID);
+    console.log(player);
+    return {
+      id: ticket.playerID,
+      ready: true,
+      steamID: player.steamID,
+    };
+  });
 
+/*
+ * @class Lobby
+ * @classdesc Contains properties and methods of a Dota 2 Lobby
+ */
 export default class Lobby {
   private radiant: Player[];
 
@@ -28,9 +39,9 @@ export default class Lobby {
 
   public lobbyID: string;
 
-  constructor(tickets: Ticket[]) {
-    this.radiant = ticketsToTeam(tickets.slice(0, 5));
-    this.dire = ticketsToTeam(tickets.slice(5));
+  constructor(tickets: Ticket[], playerMap: Map<string, Player>) {
+    this.radiant = ticketsToTeam(tickets.slice(0, 5), playerMap);
+    this.dire = ticketsToTeam(tickets.slice(5), playerMap);
     this.lobbyID = randomBytes(32).toString('hex');
   }
 
