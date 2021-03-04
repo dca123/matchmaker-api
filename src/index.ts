@@ -16,6 +16,7 @@ const io = new Server(httpServer, {
       'https://hoppscotch.io',
       'http://localhost:3000',
       'https://amritb.github.io',
+      'https://matchmaker.devinda.me',
     ],
     methods: ['GET', 'POST'],
     credentials: true,

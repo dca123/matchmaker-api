@@ -79,6 +79,13 @@ export default class DotaBot {
             }
             this.lobbyState = lobby;
           });
+          return setTimeout(
+            () =>
+              reject(
+                new Error('Lobby created reponse not received in 15 seconds')
+              ),
+            15000
+          );
         });
       } else {
         console.log('DOTA 2 Bot not ready');
