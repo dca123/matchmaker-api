@@ -19,7 +19,12 @@ const io = new Server(httpServer, {
     credentials: true,
   },
 });
+[...Array(8).keys()]
+  .map((val) => val.toString())
+  .forEach((key) => queue.enqueue(key));
+// Read JSON body from the request
 app.use(express.json());
+// Create Tickets
 app.route('/ticket').post((req, res) => {
   const ticketID = queue.enqueue(req.body.playerID);
   const response = {
@@ -35,11 +40,11 @@ io.on('connection', (socket: Socket) => {
 setInterval(() => {
   const [lobby, tickets] = queue.createLobby();
   if (lobby) {
-    console.log('GF');
-
+    console.log('GAME FOUND');
     tickets.forEach((ticket: Ticket) => {
       io.to(ticket.ticketID).emit('Game Found', lobby.lobbyID);
     });
+    lobby.invitePlayers().catch((err) => console.log(err));
   } else {
     console.log('Finding GAME');
   }
