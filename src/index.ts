@@ -21,17 +21,17 @@ const io = new Server(httpServer, {
     credentials: true,
   },
 });
-[...Array(8).keys()]
-  .map((val) => val.toString())
-  .forEach((key) => {
-    queue.enqueue(key);
-    const player: Player = {
-      id: key,
-      ready: true,
-      steamID: 'RANDOM STEAM KEY HERE',
-    };
-    playerMap.set(key, player);
-  });
+// [...Array(8).keys()]
+//   .map((val) => val.toString())
+//   .forEach((key) => {
+//     queue.enqueue(key);
+//     const player: Player = {
+//       id: key,
+//       ready: true,
+//       steamID: 'RANDOM STEAM KEY HERE',
+//     };
+//     playerMap.set(key, player);
+//   });
 // Read JSON body from the request
 app.use(express.json());
 // Create Tickets
