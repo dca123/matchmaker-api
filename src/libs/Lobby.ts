@@ -1,8 +1,10 @@
 import { randomBytes } from 'crypto';
+import sendInvite from './DotaBotEvents';
 import Ticket from './Ticket';
 
 export interface Player {
   id: string;
+  steamId: string;
   ready: boolean;
 }
 
@@ -16,6 +18,7 @@ const ticketsToTeam = (tickets: Ticket[]): Team =>
   tickets.map((ticket: Ticket) => ({
     id: ticket.playerID,
     ready: true,
+    steamId: '76561198083496791',
   }));
 
 export default class Lobby {
@@ -42,14 +45,9 @@ export default class Lobby {
   //   return this.match;
   // }
 
-  // private invitePlayers(): void {
-  //   this.radiant.forEach(({ username }) =>
-  //     console.log(`Invited player - ${username}`)
-  //   );
-  //   this.dire.forEach(({ username }) =>
-  //     console.log(`Invited player - ${username}`)
-  //   );
-  // }
+  public async invitePlayers(): Promise<void> {
+    await sendInvite([...this.radiant, ...this.dire]);
+  }
 
   // private playersAreReady(): boolean {
   //   console.log(this.match);
