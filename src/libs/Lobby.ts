@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto';
-import sendInvite from './DotaBotEvents';
+import createLobby from './DotaBotWorkflows';
 import Ticket from './Ticket';
 
 export interface Player {
@@ -23,7 +23,7 @@ const ticketsToTeam = (
     console.log(player);
     return {
       id: ticket.playerID,
-      ready: true,
+      ready: false,
       steamID: player.steamID,
     };
   });
@@ -57,7 +57,7 @@ export default class Lobby {
   // }
 
   public async invitePlayers(): Promise<void> {
-    await sendInvite([...this.radiant, ...this.dire]);
+    await createLobby([...this.radiant, ...this.dire]);
   }
 
   // private playersAreReady(): boolean {
