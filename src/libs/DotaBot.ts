@@ -4,9 +4,9 @@ import { Player } from './Lobby';
 import lobbyConfig from '../config';
 
 export default class DotaBot {
-  private accountName = 'rookie_matchmaker';
+  private accountName = process.env.STEAM_USERNAME;
 
-  private password = '$@9D&pEM#';
+  private password = process.env.STEAM_PASSWORD;
 
   private steamClient;
 
