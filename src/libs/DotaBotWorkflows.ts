@@ -15,6 +15,7 @@ const createLobbyWorkflow = async function (players: Player[]) {
         .then(() => bot.invitePlayers(players))
         .then(() => bot.waitForReady(players))
         .then(() => bot.launchLobby())
+        .then(() => bot.leaveLobby())
         .then(() => bot.exit())
         .catch((err) => console.log(err));
     }

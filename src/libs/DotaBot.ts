@@ -1,7 +1,11 @@
 import steam from 'steam';
 import dota2 from 'dota2';
+import { response } from 'express';
 import { Player } from './Lobby';
 import lobbyConfig from '../config';
+
+const lobbyChannelType =
+  dota2.schema.DOTAChatChannelType_t.DOTAChannelType_Lobby;
 
 export default class DotaBot {
   private accountName = process.env.STEAM_USERNAME;
@@ -102,14 +106,13 @@ export default class DotaBot {
 
       console.log('wait for ready');
       const lobbyChannel = `Lobby_${this.lobbyState.lobby_id}`;
-      const lobbyChannelType =
-        dota2.schema.DOTAChatChannelType_t.DOTAChannelType_Lobby;
+
       this.dota2Client.joinChat(lobbyChannel, lobbyChannelType);
       this.dota2Client.on('chatMessage', (...chatParams) => {
         const [, , , chatData] = chatParams;
         const accountID = chatData.account_id;
         const chatMessage = chatData.text;
-        const playerReadyState = players.map((player) => {
+        players = players.map((player) => {
           if (
             player.steamID ===
               this.dota2Client.ToSteamID(accountID).toString() &&
@@ -121,8 +124,8 @@ export default class DotaBot {
                   lobbyPlayer.id.toString() === player.steamID &&
                   lobbyPlayer.slot !== null
                 ) {
-                  return true;
                   console.log('PLAYER IN SLOT AND READY', player.id);
+                  return true;
                 }
                 return false;
               }
@@ -137,8 +140,8 @@ export default class DotaBot {
           }
           return player;
         });
-        console.log(playerReadyState);
-        if (playerReadyState.every((player) => player.ready === true)) {
+        console.log(players);
+        if (players.every((player) => player.ready === true)) {
           return resolve(true);
         }
       });
@@ -159,6 +162,7 @@ export default class DotaBot {
         console.log('Lobby not ready');
         return reject(new Error('Lobby not Ready'));
       }
+      // TODO incorrect here
       players.forEach((player) => {
         this.dota2Client.inviteToLobby(player.steamID);
         return resolve(true);
@@ -178,6 +182,26 @@ export default class DotaBot {
         return reject(new Error('Lobby not Ready'));
       }
       this.dota2Client.launchPracticeLobby(() => resolve(true));
+    });
+  }
+
+  public leaveLobby(): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+      const lobbyChannel = `Lobby_${this.lobbyState.lobby_id}`;
+      console.log('leaving chat');
+      this.dota2Client.leaveChat(lobbyChannel, lobbyChannelType);
+      this.dota2Client.leavePracticeLobby((err, body) => {
+        if (err) {
+          return reject(new Error(err));
+        }
+        console.log(JSON.stringify(body));
+        this.dota2Client.abandonCurrentGame((err, body2) => {
+          if (err) {
+            return reject(new Error(err));
+          }
+          return resolve(true);
+        });
+      });
     });
   }
 
