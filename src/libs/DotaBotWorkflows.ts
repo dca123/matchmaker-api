@@ -1,34 +1,19 @@
-import { Job, Queue, Worker } from 'bullmq';
-import DotaBot from './DotaBot';
+import { Queue } from 'bullmq';
 import { Player } from './Lobby';
+import worker from '../workers/createLobby';
 
 export const createLobbyQueue = new Queue('createLobby');
 
-const worker = new Worker('createLobby', async (job: Job) => {
-  const { players } = job.data;
-  const bot = new DotaBot();
-  const steamClientOK = await bot.startSteam();
-  if (steamClientOK) {
-    console.log('steam ready');
-    const dotaClientStatus = await bot.startDota();
-    if (dotaClientStatus) {
-      console.log('dota ready');
-      console.log('players', players);
-      await bot
-        .createLobby()
-        .then(() => bot.invitePlayers(players))
-        .then(() => bot.waitForReady(players))
-        .then(() => bot.launchLobby())
-        .then(() => bot.leaveLobby())
-        .then(() => bot.exit())
-        .catch((err) => console.log(err));
-    }
-    console.log('COMPLETED');
-  }
-});
-
-const createLobbyWorkflow = async (players: Player[], lobbyID: string) => {
+const createLobbyWorkflow = async (
+  players: Player[],
+  lobbyID: string
+): Promise<void> => {
   await createLobbyQueue.add(`lobby #${lobbyID}`, { players });
 };
+worker.on('completed', (job) => {
+  console.log(
+    `Finished job ${job.id} to create lobby ${JSON.stringify(job.data)}`
+  );
+});
 
 export default createLobbyWorkflow;
