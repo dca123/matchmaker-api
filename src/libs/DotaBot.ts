@@ -24,6 +24,8 @@ export default class DotaBot {
 
   private lobbyState;
 
+  private playerReadyState;
+
   public constructor() {
     this.steamClient = new steam.SteamClient();
     this.steamUser = new steam.SteamUser(this.steamClient);
@@ -56,7 +58,7 @@ export default class DotaBot {
     return new Promise<boolean>((resolve, reject) => {
       this.dota2Client.launch();
       this.dota2Client.on('ready', () => {
-        console.log('Node-dota2 ready.');
+        logger.debug('Node-dota2 ready.');
         this.isReady = true;
         resolve(true);
       });
@@ -66,53 +68,57 @@ export default class DotaBot {
     });
   }
 
-  public createLobby(): Promise<boolean> {
+  public createLobby(lobbyID: string): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
       if (this.isReady) {
-        this.dota2Client.createPracticeLobby(lobbyConfig, (err, body) => {
-          if (err) {
-            return reject(new Error(err));
-          }
-          console.log(JSON.stringify(body));
-          this.lobbyReady = true;
-          this.dota2Client.joinPracticeLobbyTeam(1, 4);
-          this.dota2Client.on('practiceLobbyUpdate', (lobby) => {
-            console.log('lobby update message arrived');
-            if (this.lobbyState === undefined) {
-              resolve(true);
+        this.dota2Client.createPracticeLobby(
+          { ...lobbyConfig, game_name: `Lobby ${lobbyID}` },
+          (err, body) => {
+            if (err) {
+              return reject(new Error(err));
             }
-            this.lobbyState = lobby;
-          });
-          return setTimeout(
-            () =>
-              reject(
-                new Error('Lobby created reponse not received in 15 seconds')
-              ),
-            15000
-          );
-        });
+            logger.debug(JSON.stringify(body));
+            this.lobbyReady = true;
+            this.dota2Client.joinPracticeLobbyTeam(1, 4);
+            this.dota2Client.on('practiceLobbyUpdate', (lobby) => {
+              logger.debug('lobby update message arrived');
+              if (this.lobbyState === undefined) {
+                resolve(true);
+              }
+              this.lobbyState = lobby;
+            });
+            return setTimeout(
+              () =>
+                reject(
+                  new Error('Lobby created reponse not received in 15 seconds')
+                ),
+              15000
+            );
+          }
+        );
       } else {
-        console.log('DOTA 2 Bot not ready');
+        logger.debug('DOTA 2 Bot not ready');
         reject(new Error('DOTA 2 Bot not ready'));
       }
     });
   }
 
   public waitForReady(players: Player[]): Promise<boolean> {
+    this.playerReadyState = players;
     return new Promise<boolean>((resolve, reject) => {
       if (this.lobbyState === undefined) {
         return reject(new Error('Lobby State not Found'));
       }
 
-      console.log('wait for ready');
+      logger.debug('wait for ready');
       const lobbyChannel = `Lobby_${this.lobbyState.lobby_id}`;
 
       this.dota2Client.joinChat(lobbyChannel, lobbyChannelType);
-      this.dota2Client.on('chatMessage', (...chatParams) => {
+      this.dota2Client.on('chatMessage', (...chatParams): void => {
         const [, , , chatData] = chatParams;
         const accountID = chatData.account_id;
         const chatMessage = chatData.text;
-        players = players.map((player) => {
+        this.playerReadyState = players.map((player) => {
           if (
             player.steamID ===
               this.dota2Client.ToSteamID(accountID).toString() &&
@@ -124,7 +130,7 @@ export default class DotaBot {
                   lobbyPlayer.id.toString() === player.steamID &&
                   lobbyPlayer.slot !== null
                 ) {
-                  console.log('PLAYER IN SLOT AND READY', player.id);
+                  logger.debug('PLAYER IN SLOT AND READY', player.id);
                   return true;
                 }
                 return false;
@@ -136,14 +142,15 @@ export default class DotaBot {
                 ready: true,
               };
             }
-            console.log('PLAYER IS READY', player.id);
+            logger.debug('PLAYER IS READY', player.id);
           }
           return player;
         });
-        console.log(players);
+        logger.debug(players);
         if (players.every((player) => player.ready === true)) {
           return resolve(true);
         }
+        return null;
       });
       return setTimeout(
         () => reject(new Error('Players not Ready within 20 seconds ! ')),
@@ -155,11 +162,11 @@ export default class DotaBot {
   public invitePlayers(players: Player[]): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
       if (!this.isReady) {
-        console.log('DOTA 2 Bot not ready');
+        logger.debug('DOTA 2 Bot not ready');
         return reject(new Error('DOTA 2 Bot not ready'));
       }
       if (!this.lobbyReady) {
-        console.log('Lobby not ready');
+        logger.debug('Lobby not ready');
         return reject(new Error('Lobby not Ready'));
       }
       // TODO incorrect here
@@ -174,34 +181,36 @@ export default class DotaBot {
   public launchLobby(): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
       if (!this.isReady) {
-        console.log('DOTA 2 Bot not ready');
+        logger.debug('DOTA 2 Bot not ready');
         return reject(new Error('DOTA 2 Bot not ready'));
       }
       if (!this.lobbyReady) {
-        console.log('Lobby not ready');
+        logger.debug('Lobby not ready');
         return reject(new Error('Lobby not Ready'));
       }
       this.dota2Client.launchPracticeLobby(() => resolve(true));
+      return null;
     });
   }
 
   public destroyLobby(): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
       if (!this.isReady) {
-        console.log('DOTA 2 Bot not ready');
+        logger.debug('DOTA 2 Bot not ready');
         return reject(new Error('DOTA 2 Bot not ready'));
       }
       if (!this.lobbyReady) {
-        console.log('Lobby not ready');
+        logger.debug('Lobby not ready');
         return reject(new Error('Lobby not Ready'));
       }
       this.dota2Client.destroyLobby((err) => {
         if (err) {
-          console.log(err);
+          logger.debug(err);
           return reject(new Error('Lobby not Ready'));
         }
         return resolve(true);
       });
+      return null;
     });
   }
 

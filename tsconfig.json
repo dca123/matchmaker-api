@@ -3,9 +3,9 @@
     "module": "CommonJS",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
     "target": "es6",
     "lib": ["ES6"],
-    // TODO change later
     "noImplicitAny": false,
     "moduleResolution": "node",
     "sourceMap": true,

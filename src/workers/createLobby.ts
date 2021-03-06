@@ -3,7 +3,7 @@ import DotaBot from '../libs/DotaBot';
 import logger from '../loaders/logger';
 
 export default new Worker('createLobby', async (job: Job) => {
-  const { players } = job.data;
+  const { players, lobbyID } = job.data;
   const bot = new DotaBot();
   const steamClientOK = await bot.startSteam();
   const createLobbyReturn = {
@@ -16,7 +16,7 @@ export default new Worker('createLobby', async (job: Job) => {
     if (dotaClientStatus) {
       logger.debug('Dota ready');
       logger.trace('Creating lobby for players - %O', players);
-      await bot.createLobby();
+      await bot.createLobby(lobbyID);
       logger.debug('Lobby created');
       job.updateProgress(15);
       await bot.invitePlayers(players);

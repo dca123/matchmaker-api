@@ -43,6 +43,7 @@ app.route('/ticket').post((req, res) => {
   const response = {
     tickedID: ticketID,
   };
+  logger.info('Created playerID:ticket - %s:%s', playerID, ticketID);
   res.send(response);
 });
 io.on('connection', (socket: Socket) => {
