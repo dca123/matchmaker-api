@@ -1,6 +1,8 @@
-import express from 'express';
+import express, { query } from 'express';
 import { Server, Socket } from 'socket.io';
 import { createServer } from 'http';
+import { BullMQAdapter, setQueues, router } from 'bull-board';
+import { createLobbyQueue } from './libs/DotaBotWorkflows';
 import SearchQueue from './libs/SearchQueue';
 import Ticket from './libs/Ticket';
 import { Player } from './libs/Lobby';
@@ -22,19 +24,10 @@ const io = new Server(httpServer, {
     credentials: true,
   },
 });
-// [...Array(8).keys()]
-//   .map((val) => val.toString())
-//   .forEach((key) => {
-//     queue.enqueue(key);
-//     const player: Player = {
-//       id: key,
-//       ready: true,
-//       steamID: 'RANDOM STEAM KEY HERE',
-//     };
-//     playerMap.set(key, player);
-//   });
+setQueues([new BullMQAdapter(createLobbyQueue)]);
 // Read JSON body from the request
 app.use(express.json());
+app.use('/admin/queues', router);
 // Create Tickets
 app.route('/ticket').post((req, res) => {
   const { playerID, steamID } = req.body;

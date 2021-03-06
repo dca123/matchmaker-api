@@ -1,7 +1,11 @@
+import { Job, Queue, Worker } from 'bullmq';
 import DotaBot from './DotaBot';
 import { Player } from './Lobby';
 
-const createLobbyWorkflow = async function (players: Player[]) {
+export const createLobbyQueue = new Queue('createLobby');
+
+const worker = new Worker('createLobby', async (job: Job) => {
+  const { players } = job.data;
   const bot = new DotaBot();
   const steamClientOK = await bot.startSteam();
   if (steamClientOK) {
@@ -10,7 +14,7 @@ const createLobbyWorkflow = async function (players: Player[]) {
     if (dotaClientStatus) {
       console.log('dota ready');
       console.log('players', players);
-      bot
+      await bot
         .createLobby()
         .then(() => bot.invitePlayers(players))
         .then(() => bot.waitForReady(players))
@@ -19,7 +23,12 @@ const createLobbyWorkflow = async function (players: Player[]) {
         .then(() => bot.exit())
         .catch((err) => console.log(err));
     }
+    console.log('COMPLETED');
   }
+});
+
+const createLobbyWorkflow = async (players: Player[], lobbyID: string) => {
+  await createLobbyQueue.add(`lobby #${lobbyID}`, { players });
 };
 
 export default createLobbyWorkflow;
