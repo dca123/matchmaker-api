@@ -1,0 +1,7 @@
+FROM ubuntu:20.04
+
+# set the argument default
+ARG NODE_ENV=production
+
+# use the argument
+RUN echo $NODE_ENV
