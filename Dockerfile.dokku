@@ -1,7 +1,5 @@
 FROM ubuntu:20.04
-
-# set the argument default
-ARG NODE_ENV=production
-
-# use the argument
-RUN echo $NODE_ENV
+WORKDIR /matchmaker-api
+COPY . .
+RUN yarn install
+CMD ["yarn","run","dev"]
