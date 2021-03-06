@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "postinstall": "cd node_modules/steam-resources/ && npm install ",
+    "postinstall": "cd node_modules/steam-resources/ && yarn install ",
     "dev": "ts-node-dev src/app.ts --watch",
     "build": "tsc -p .",
     "lint": "eslint src/**/*.ts",
@@ -17,6 +17,7 @@
     "@types/node": "^14.14.31",
     "@typescript-eslint/eslint-plugin": "^4.15.2",
     "@typescript-eslint/parser": "^4.15.2",
+    "bull-repl": "^0.26.3",
     "commitizen": "^4.2.3",
     "cz-conventional-changelog": "3.3.0",
     "eslint": "^7.20.0",
