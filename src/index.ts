@@ -1,4 +1,4 @@
-import express, { query } from 'express';
+import express from 'express';
 import { Server, Socket } from 'socket.io';
 import { createServer } from 'http';
 import { BullMQAdapter, setQueues, router } from 'bull-board';

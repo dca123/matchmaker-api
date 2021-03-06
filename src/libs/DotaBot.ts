@@ -1,6 +1,5 @@
 import steam from 'steam';
 import dota2 from 'dota2';
-import { response } from 'express';
 import { Player } from './Lobby';
 import lobbyConfig from '../config';
 
@@ -147,7 +146,7 @@ export default class DotaBot {
       });
       return setTimeout(
         () => reject(new Error('Players not Ready within 20 seconds ! ')),
-        120000
+        20000
       );
     });
   }
@@ -185,22 +184,36 @@ export default class DotaBot {
     });
   }
 
+  public destroyLobby(): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+      if (!this.isReady) {
+        console.log('DOTA 2 Bot not ready');
+        return reject(new Error('DOTA 2 Bot not ready'));
+      }
+      if (!this.lobbyReady) {
+        console.log('Lobby not ready');
+        return reject(new Error('Lobby not Ready'));
+      }
+      this.dota2Client.destroyLobby((err) => {
+        if (err) {
+          console.log(err);
+          return reject(new Error('Lobby not Ready'));
+        }
+        return resolve(true);
+      });
+    });
+  }
+
   public leaveLobby(): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
       const lobbyChannel = `Lobby_${this.lobbyState.lobby_id}`;
-      console.log('leaving chat');
       this.dota2Client.leaveChat(lobbyChannel, lobbyChannelType);
-      this.dota2Client.leavePracticeLobby((err, body) => {
+      this.dota2Client.leavePracticeLobby((err) => {
         if (err) {
           return reject(new Error(err));
         }
-        console.log(JSON.stringify(body));
-        this.dota2Client.abandonCurrentGame((err, body2) => {
-          if (err) {
-            return reject(new Error(err));
-          }
-          return resolve(true);
-        });
+        this.dota2Client.abandonCurrentGame();
+        return resolve(true);
       });
     });
   }
