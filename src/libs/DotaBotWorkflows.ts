@@ -1,4 +1,4 @@
-import { Queue } from 'bullmq';
+import { Job, Queue } from 'bullmq';
 import { Player } from './Lobby';
 import worker from '../workers/createLobby';
 import logger from '../loaders/logger';
@@ -9,10 +9,10 @@ const createLobbyWorkflow = async (
   players: Player[],
   lobbyID: string
 ): Promise<void> => {
-  await createLobbyQueue.add(`lobby #${lobbyID}`, { players });
+  await createLobbyQueue.add(`lobby #${lobbyID}`, { players, lobbyID });
 };
-worker.on('completed', (job) => {
-  if (job.returnValue.lobbyTimeout) {
+worker.on('completed', (job: Job) => {
+  if (job.returnvalue.lobbyTimeout) {
     logger.info(`Finished job ${job.id} - Lobby create timedout due to`);
   } else {
     logger.info(
