@@ -41,7 +41,7 @@ export default class Lobby {
   constructor(tickets: Ticket[], playerMap: Map<string, Player>) {
     this.radiant = ticketsToTeam(tickets.slice(0, 5), playerMap);
     this.dire = ticketsToTeam(tickets.slice(5), playerMap);
-    this.lobbyID = randomBytes(16).toString('hex');
+    this.lobbyID = randomBytes(5).toString('hex');
   }
 
   public async invitePlayers(): Promise<void> {
