@@ -1,7 +1,8 @@
 import steam from 'steam';
 import dota2 from 'dota2';
 import { Player } from './Lobby';
-import lobbyConfig from '../config';
+import { lobbyConfig } from '../config';
+import logger from '../loaders/logger';
 
 const lobbyChannelType =
   dota2.schema.DOTAChatChannelType_t.DOTAChannelType_Lobby;

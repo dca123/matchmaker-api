@@ -2,6 +2,7 @@ import express from 'express';
 import { Server, Socket } from 'socket.io';
 import { createServer } from 'http';
 import { BullMQAdapter, setQueues, router } from 'bull-board';
+import logger from './loaders/logger';
 import { createLobbyQueue } from './libs/DotaBotWorkflows';
 import SearchQueue from './libs/SearchQueue';
 import Ticket from './libs/Ticket';
@@ -12,6 +13,7 @@ const app = express();
 const queue = new SearchQueue();
 const httpServer = createServer(app);
 const playerMap = new Map<string, Player>();
+
 const io = new Server(httpServer, {
   cors: {
     origin: [
@@ -53,16 +55,16 @@ setInterval(() => {
   // Match Conditions Met
   const [lobby, tickets] = queue.createLobby(playerMap);
   if (lobby) {
-    console.log('GAME FOUND');
+    logger.info('GAME FOUND');
     tickets.forEach((ticket: Ticket) => {
       io.to(ticket.ticketID).emit('Game Found', lobby.lobbyID);
     });
-    lobby.invitePlayers().catch((err) => console.log(err));
+    lobby.invitePlayers().catch((err) => logger.fatal(err));
   } else {
-    console.log('Finding GAME');
+    logger.info('Finding GAME');
   }
 }, 10000);
 
 httpServer.listen(port, () => {
-  console.log(`API listening at http://localhost:${port}`);
+  logger.info(`API listening at http://localhost:${port}`);
 });
