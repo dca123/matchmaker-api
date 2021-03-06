@@ -42,7 +42,7 @@ export default class Lobby {
   constructor(tickets: Ticket[], playerMap: Map<string, Player>) {
     this.radiant = ticketsToTeam(tickets.slice(0, 5), playerMap);
     this.dire = ticketsToTeam(tickets.slice(5), playerMap);
-    this.lobbyID = randomBytes(32).toString('hex');
+    this.lobbyID = randomBytes(16).toString('hex');
   }
 
   // Create Lobby
@@ -57,7 +57,7 @@ export default class Lobby {
   // }
 
   public async invitePlayers(): Promise<void> {
-    await createLobby([...this.radiant, ...this.dire]);
+    await createLobby([...this.radiant, ...this.dire], this.lobbyID);
   }
 
   // private playersAreReady(): boolean {
