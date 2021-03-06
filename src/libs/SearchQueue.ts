@@ -15,7 +15,6 @@ export default class SearchQueue {
       this.queue = [...this.queue, newTicket.ticketID];
       this.playerToTicketIDs.set(playerID, newTicket.ticketID);
       this.ticketMap.set(newTicket.ticketID, newTicket);
-      console.log(this.playerToTicketIDs);
       return newTicket.ticketID;
     }
     throw new Error(`Player ${playerID} is already in the queue`);
@@ -33,8 +32,8 @@ export default class SearchQueue {
     playerMap: Map<string, Player>
   ): [Lobby, Ticket[]] | [false] {
     // Meet conditions
-    if (this.queue.length >= 2) {
-      const lobbyTickets = this.dequeue();
+    if (this.queue.length >= 1) {
+      const lobbyTickets = this.dequeue(1);
       const newLobby = new Lobby(lobbyTickets, playerMap);
       return [newLobby, lobbyTickets];
     }
@@ -42,7 +41,6 @@ export default class SearchQueue {
   }
 
   public peek(): Ticket {
-    console.log(this.ticketMap);
     return this.ticketMap.get(this.queue[0]);
   }
 

@@ -20,7 +20,6 @@ const ticketsToTeam = (
 ): Team =>
   tickets.map((ticket: Ticket) => {
     const player = playerMap.get(ticket.playerID);
-    console.log(player);
     return {
       id: ticket.playerID,
       ready: false,
@@ -42,26 +41,10 @@ export default class Lobby {
   constructor(tickets: Ticket[], playerMap: Map<string, Player>) {
     this.radiant = ticketsToTeam(tickets.slice(0, 5), playerMap);
     this.dire = ticketsToTeam(tickets.slice(5), playerMap);
-    this.lobbyID = randomBytes(16).toString('hex');
+    this.lobbyID = randomBytes(5).toString('hex');
   }
-
-  // Create Lobby
-  // Invite People
-  // Wait for ready
-  // Ensure player joins correctly
-  // Start game
-  // Go to final page
-  // public startGame(): number {
-  //   console.log('match has started');
-  //   return this.match;
-  // }
 
   public async invitePlayers(): Promise<void> {
     await createLobby([...this.radiant, ...this.dire], this.lobbyID);
   }
-
-  // private playersAreReady(): boolean {
-  //   console.log(this.match);
-  //   return true;
-  // }
 }
