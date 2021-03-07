@@ -9,7 +9,7 @@
     "format": "eslint src/**/*.ts --fix",
     "start": "node dist/app.js",
     "clean": "rm -rf ./dist/*",
-    "build": "npm run steamResourceSetup && tsc -p .",
+    "build": "tsc -p .",
     "postinstall": "cd node_modules/steam-resources/ && yarn install"
   },
   "author": "",

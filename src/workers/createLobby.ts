@@ -51,6 +51,6 @@ export default new Worker(
     return createLobbyReturn;
   },
   {
-    connection: new Redis(process.env.REDIS_URL ?? '127.0.0.1'),
+    connection: new Redis(process.env.REDIS_URL),
   }
 );
