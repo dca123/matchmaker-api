@@ -5,7 +5,7 @@ import worker from '../workers/createLobby';
 import logger from '../loaders/logger';
 
 export const createLobbyQueue = new Queue('createLobby', {
-  connection: new Redis(process.env.REDIS_URL ?? '127.0.0.1'),
+  connection: new Redis(process.env.REDIS_URL),
 });
 
 const createLobbyWorkflow = async (
