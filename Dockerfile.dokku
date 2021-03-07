@@ -1,6 +1,7 @@
 FROM node:15-alpine
+RUN apk --update --no-cache add build-base cmake libtool automake autoconf
+RUN apk add subversion
 WORKDIR /matchmaker-api
 COPY . .
-RUN apk add subversion
 RUN yarn install
 CMD ["yarn","run","dev"]
