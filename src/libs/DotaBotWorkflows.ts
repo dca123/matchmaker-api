@@ -1,13 +1,11 @@
 import { Job, Queue } from 'bullmq';
+import Redis from 'ioredis';
 import { Player } from './Lobby';
 import worker from '../workers/createLobby';
 import logger from '../loaders/logger';
 
 export const createLobbyQueue = new Queue('createLobby', {
-  connection: {
-    host: process.env.REDIS_URL ?? '127.0.0.1',
-    port: 6379,
-  },
+  connection: new Redis(process.env.REDIS_URL ?? '127.0.0.1'),
 });
 
 const createLobbyWorkflow = async (

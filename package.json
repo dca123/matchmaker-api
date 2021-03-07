@@ -44,6 +44,7 @@
     "dota2": "^7.0.3",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "ioredis": "^4.23.0",
     "pino": "^6.11.1",
     "pino-pretty": "^4.7.0",
     "socket.io": "^3.1.1",

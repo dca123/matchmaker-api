@@ -1,4 +1,5 @@
 import { Worker, Job } from 'bullmq';
+import Redis from 'ioredis';
 import DotaBot from '../libs/DotaBot';
 import logger from '../loaders/logger';
 
@@ -50,9 +51,6 @@ export default new Worker(
     return createLobbyReturn;
   },
   {
-    connection: {
-      host: process.env.REDIS_URL ?? '127.0.0.1',
-      port: 6379,
-    },
+    connection: new Redis(process.env.REDIS_URL ?? '127.0.0.1'),
   }
 );
