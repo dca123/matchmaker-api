@@ -118,7 +118,7 @@ export default class DotaBot {
         const [, , , chatData] = chatParams;
         const accountID = chatData.account_id;
         const chatMessage = chatData.text;
-        this.playerReadyState = players.map((player) => {
+        this.playerReadyState = this.playerReadyState.map((player) => {
           if (
             player.steamID ===
               this.dota2Client.ToSteamID(accountID).toString() &&
@@ -146,8 +146,8 @@ export default class DotaBot {
           }
           return player;
         });
-        logger.debug(players);
-        if (players.every((player) => player.ready === true)) {
+        logger.debug('Player state - %O', this.playerReadyState);
+        if (this.playerReadyState.every((player) => player.ready === true)) {
           return resolve(true);
         }
         return null;

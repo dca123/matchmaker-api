@@ -2,6 +2,7 @@ import express from 'express';
 import { Server, Socket } from 'socket.io';
 import { createServer } from 'http';
 import { BullMQAdapter, setQueues, router } from 'bull-board';
+import cors from 'cors';
 import logger from './loaders/logger';
 import { createLobbyQueue } from './libs/DotaBotWorkflows';
 import SearchQueue from './libs/SearchQueue';
@@ -22,13 +23,14 @@ const io = new Server(httpServer, {
       'https://amritb.github.io',
       'https://matchmaker.devinda.me',
     ],
-    methods: ['GET', 'POST'],
-    credentials: true,
+    // methods: ['GET', 'POST'],
+    // credentials: true,
   },
 });
 setQueues([new BullMQAdapter(createLobbyQueue)]);
 // Read JSON body from the request
 app.use(express.json());
+app.use(cors());
 app.use('/admin/queues', router);
 // Create Tickets
 app.route('/ticket').post((req, res) => {
