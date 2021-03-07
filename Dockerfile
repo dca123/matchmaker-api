@@ -15,7 +15,6 @@ WORKDIR /matchmaker-api
 RUN apk --no-cache add git 
 COPY --from=ts-compiler ./matchmaker-api/dist ./dist
 COPY ./package.json ./yarn.lock ./
-RUN ls -a
 RUN yarn install --production
+COPY --from=ts-compiler ./matchmaker-api/node_modules/steam-resources ./node_modules/steam-resources
 CMD [ "npm","start" ]
-
