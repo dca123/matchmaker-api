@@ -4,7 +4,7 @@ RUN apk add --update-cache \
     automake autoconf git \
     subversion
 WORKDIR /matchmaker-api
-COPY package.json yarn.lock ./
+COPY ./package.json ./yarn.lock ./
 RUN yarn install
 COPY . .
 RUN yarn run clean
@@ -14,7 +14,7 @@ FROM node:15-alpine as production
 WORKDIR /matchmaker-api
 RUN apk --no-cache add git 
 COPY --from=ts-compiler ./matchmaker-api/dist ./dist
-COPY package.json yarn.lock ./
+COPY ./package.json ./yarn.lock ./
 RUN ls -a
 RUN yarn install --production
 CMD [ "npm","start" ]
