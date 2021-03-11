@@ -48,10 +48,25 @@ app.route('/ticket').post((req, res) => {
   logger.info('Created playerID:ticket - %s:%s', playerID, ticketID);
   res.send(response);
 });
-io.on('connection', (socket: Socket) => {
-  socket.on('waitForLobby', (ticketID: string) => {
-    socket.join(ticketID);
+type ticketSocket = Socket & {
+  auth: {
+    ticket: Ticket;
+  };
+  ticketID: string;
+};
+io.of('/searching').use((socket: ticketSocket, next) => {
+  const { ticket } = socket.handshake.auth;
+  socket.ticketID = ticket.ticketID;
+  logger.debug('Adding ticketID %s to socket', socket.ticketID);
+  next();
   });
+io.of('/searching').on('connection', (socket: ticketSocket) => {
+  logger.debug('Joining ticket %s', socket.ticketID);
+  socket.join(socket.ticketID);
+  if (ticketLobbyMap.has(socket.ticketID)) {
+    const lobbyID = ticketLobbyMap.get(socket.ticketID);
+    io.of('/searching').to(socket.ticketID).emit('lobbyFound', lobbyID);
+  }
 });
 // Constant function to check for Match Created
 setInterval(() => {
@@ -60,9 +75,11 @@ setInterval(() => {
   if (lobby) {
     logger.info('GAME FOUND');
     tickets.forEach((ticket: Ticket) => {
-      io.to(ticket.ticketID).emit('Game Found', lobby.lobbyID);
+      logger.debug('Emmiting lobby id to %s', ticket.ticketID);
+      ticketLobbyMap.set(ticket.ticketID, lobby.lobbyID);
+      io.of('/searching').to(ticket.ticketID).emit('lobbyFound', lobby.lobbyID);
     });
-    lobby.invitePlayers().catch((err) => logger.fatal(err));
+    lobby.start().catch((err) => logger.fatal(err));
   } else {
     logger.info('Finding GAME');
   }
@@ -71,3 +88,4 @@ setInterval(() => {
 httpServer.listen(port, () => {
   logger.info(`API listening at http://localhost:${port}`);
 });
+export default io;
