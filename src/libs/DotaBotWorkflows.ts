@@ -35,7 +35,9 @@ export type createLobbyEventsType = {
   jobId: string;
   data: createLobbyProgressType;
 };
-const createLobbyEvents = new QueueEvents('createLobby');
+const createLobbyEvents = new QueueEvents('createLobby', {
+  connection: new Redis(process.env.REDIS_URL),
+});
 createLobbyEvents.on('progress', (event: createLobbyEventsType) => {
   const { progressType, lobbyID, progressValue, progressMessage } = event.data;
   switch (progressType) {
