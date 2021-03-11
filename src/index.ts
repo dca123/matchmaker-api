@@ -23,8 +23,8 @@ const io = new Server(httpServer, {
       'https://amritb.github.io',
       'https://matchmaker.devinda.me',
     ],
-    // methods: ['GET', 'POST'],
-    // credentials: true,
+    methods: ['GET', 'POST'],
+    credentials: true,
   },
 });
 setQueues([new BullMQAdapter(createLobbyQueue)]);
@@ -43,7 +43,7 @@ app.route('/ticket').post((req, res) => {
   };
   playerMap.set(playerID, player);
   const response = {
-    tickedID: ticketID,
+    ticketID,
   };
   logger.info('Created playerID:ticket - %s:%s', playerID, ticketID);
   res.send(response);
