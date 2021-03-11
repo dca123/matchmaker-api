@@ -14,7 +14,9 @@
     "@typescript-eslint/no-explicit-any": 1,
     "@typescript-eslint/explicit-function-return-type": [
       1,
-      { "allowExpressions": true }
+      {
+        "allowExpressions": true
+      }
     ],
     "prettier/prettier": ["error"],
     "import/extensions": [
@@ -23,7 +25,11 @@
         "extensions": [".js", ".jsx", ".ts", ".tsx"]
       }
     ],
-    "no-console": 1
+    "no-console": 1,
+    "no-param-reassign": ["error", {
+      "props": true,
+      "ignorePropertyModificationsFor": ["socket"]
+    }]
   },
   "settings": {
     "import/resolver": {
