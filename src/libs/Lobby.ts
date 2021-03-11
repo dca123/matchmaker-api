@@ -44,7 +44,7 @@ export default class Lobby {
     this.lobbyID = randomBytes(5).toString('hex');
   }
 
-  public async invitePlayers(): Promise<void> {
+  public async start(): Promise<void> {
     await createLobby([...this.radiant, ...this.dire], this.lobbyID);
   }
 }

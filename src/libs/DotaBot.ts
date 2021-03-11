@@ -24,7 +24,7 @@ export default class DotaBot {
 
   private lobbyState;
 
-  private playerReadyState;
+  private steamIDreadyStateMap = new Map<string, boolean>();
 
   public constructor() {
     this.steamClient = new steam.SteamClient();
@@ -103,54 +103,30 @@ export default class DotaBot {
     });
   }
 
-  public waitForReady(players: Player[]): Promise<boolean> {
-    this.playerReadyState = players;
+  public waitForReady(): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
       if (this.lobbyState === undefined) {
         return reject(new Error('Lobby State not Found'));
       }
 
       logger.debug('wait for ready');
-      const lobbyChannel = `Lobby_${this.lobbyState.lobby_id}`;
-
-      this.dota2Client.joinChat(lobbyChannel, lobbyChannelType);
-      this.dota2Client.on('chatMessage', (...chatParams): void => {
-        const [, , , chatData] = chatParams;
-        const accountID = chatData.account_id;
-        const chatMessage = chatData.text;
-        this.playerReadyState = this.playerReadyState.map((player) => {
+      this.dota2Client.on('practiceLobbyUpdate', () => {
+        this.lobbyState.all_members.forEach((lobbyPlayer) => {
+          const lobbyPlayerID = lobbyPlayer.id.toString();
           if (
-            player.steamID ===
-              this.dota2Client.ToSteamID(accountID).toString() &&
-            chatMessage === '!ready'
+            this.steamIDreadyStateMap.get(lobbyPlayerID) === false &&
+            lobbyPlayer.slot !== null
           ) {
-            const playerInSlot = this.lobbyState.all_members.some(
-              (lobbyPlayer) => {
-                if (
-                  lobbyPlayer.id.toString() === player.steamID &&
-                  lobbyPlayer.slot !== null
-                ) {
-                  logger.debug('PLAYER IN SLOT AND READY', player.id);
-                  return true;
-                }
-                return false;
-              }
-            );
-            if (playerInSlot) {
-              return {
-                ...player,
-                ready: true,
-              };
-            }
-            logger.debug('PLAYER IS READY', player.id);
+            this.steamIDreadyStateMap.set(lobbyPlayerID, true);
           }
-          return player;
+          return true;
         });
-        logger.debug('Player state - %O', this.playerReadyState);
-        if (this.playerReadyState.every((player) => player.ready === true)) {
-          return resolve(true);
+        const allReady = [...this.steamIDreadyStateMap.values()].every(
+          (state: boolean) => state === true
+        );
+        if (allReady) {
+          resolve(true);
         }
-        return null;
       });
       return setTimeout(
         () => reject(new Error('Players not Ready within 20 seconds ! ')),
@@ -169,12 +145,11 @@ export default class DotaBot {
         logger.debug('Lobby not ready');
         return reject(new Error('Lobby not Ready'));
       }
-      // TODO incorrect here
       players.forEach((player) => {
         this.dota2Client.inviteToLobby(player.steamID);
-        return resolve(true);
+        this.steamIDreadyStateMap.set(player.steamID, false);
       });
-      return reject(new Error('Something happened Inviting Players !'));
+      return resolve(true);
     });
   }
 
