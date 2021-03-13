@@ -17,10 +17,10 @@ export function setupMiddleware(
     socket.ticketID = ticket.ticketID;
     socket.lobbyID = ticketIDLobbyIDMap.get(ticket.ticketID);
     logger.debug(
-      '/Lobby - Adding ticketID %s to socket',
+      '/Lobby - Setting ticketID %s in socket',
       socket.ticketID.slice(0, 10)
     );
-    logger.debug('/Lobby - Adding lobbyID %s to socket', socket.lobbyID);
+    logger.debug('/Lobby - Setting lobbyID %s in socket', socket.lobbyID);
     next();
   });
 }
@@ -41,8 +41,8 @@ export function setupConnection(
 
       // Emit list of players
       logger.debug(
-        'Emiting player list to %s with list %O',
-        socket.ticketID,
+        '/Lobby - Emiting player list to %s with list %O',
+        socket.ticketID.slice(0, 10),
         lobby.getPlayers()
       );
       io.to(lobbyID).emit('playerList', lobby.getPlayers());
@@ -58,6 +58,11 @@ export function setupConnection(
         progressType,
       } = job.progress as createLobbyProgressType;
 
+      logger.debug(
+        '/Lobby - Emiting lobbyTimeout %O to lobby %s',
+        [progressValue, progressMessage, lobby.getPlayers()],
+        lobbyID
+      );
       switch (progressType) {
         case 'lobbyState':
           io.to(lobbyID).emit('lobbyState', progressValue, progressMessage);
@@ -73,11 +78,6 @@ export function setupConnection(
           break;
 
         case 'waitingForPlayers':
-          logger.debug(
-            'Emiting waitingForPlayers update %O to lobby %s',
-            [progressValue, progressMessage, lobby.getPlayers()],
-            lobbyID
-          );
           io.to(lobbyID).emit(
             'waitingForPlayers',
             progressValue,

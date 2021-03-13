@@ -31,7 +31,11 @@ export default function expressApp(
     const response = {
       ticketID,
     };
-    logger.info('Created playerID:ticket - %s:%s', playerID, ticketID);
+    logger.info(
+      'Created ticket %s for player %s',
+      playerID,
+      ticketID.slice(0, 10)
+    );
     res.send(response);
   });
   return app;
