@@ -97,6 +97,12 @@ io.of('/lobby').on('connection', async (socket: lobbySocket) => {
   socket.join(lobbyID);
 
   if (lobbyIDjobIDMap.get(lobbyID)) {
+    const lobby = lobbyIDlobbyMap.get(lobbyID);
+    logger.debug(
+      'Emiting player list to %s with list %O',
+      socket.ticketID,
+      lobby.getPlayers()
+    );
     io.of('/lobby').to(lobbyID).emit('playerList', lobby.getPlayers());
     const job = await Job.fromId(
       createLobbyQueue,
@@ -107,14 +113,33 @@ io.of('/lobby').on('connection', async (socket: lobbySocket) => {
       progressMessage,
       progressType,
     } = job.progress as createLobbyProgressType;
-    if (progressType === 'lobbyTimeout') {
-      io.of('/lobby')
-        .to(lobbyID)
-        .emit('lobbyState', progressValue, progressMessage, true);
-    } else {
-      io.of('/lobby')
-        .to(lobbyID)
-        .emit('lobbyState', progressValue, progressMessage);
+    switch (progressType) {
+      case 'lobbyTimeout':
+        io.of('/lobby')
+          .to(lobbyID)
+          .emit('lobbyTimeout', progressValue, progressMessage, true);
+        break;
+      case 'lobbyState':
+        io.of('/lobby')
+          .to(lobbyID)
+          .emit('lobbyState', progressValue, progressMessage);
+        break;
+      default: {
+        logger.debug(
+          'Emiting waitingForPlayers update %O to lobby %s',
+          [progressValue, progressMessage, lobby.getPlayers()],
+          lobbyID
+        );
+        io.of('/lobby')
+          .to(lobbyID)
+          .emit(
+            'waitingForPlayers',
+            progressValue,
+            progressMessage,
+            lobby.getPlayers()
+          );
+        break;
+      }
     }
   }
 });
