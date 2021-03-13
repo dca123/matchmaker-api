@@ -1,5 +1,7 @@
 import steam from 'steam';
 import dota2 from 'dota2';
+import { Job } from 'bullmq';
+import { lobbyUpdateEventMessages } from '../workers/createLobby';
 import { Player } from './Lobby';
 import { lobbyConfig } from '../config';
 import logger from '../loaders/logger';
@@ -24,7 +26,7 @@ export default class DotaBot {
 
   private lobbyState;
 
-  private steamIDreadyStateMap = new Map<string, boolean>();
+  private steamIDplayerMap = new Map<string, Player>();
 
   public constructor() {
     this.steamClient = new steam.SteamClient();
@@ -117,51 +119,61 @@ export default class DotaBot {
       return resolve(true);
     });
   }
+
+  public waitForReady(job: Job, lobbyID: string): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
       if (this.lobbyState === undefined) {
         return reject(new Error('Lobby State not Found'));
       }
 
-      logger.debug('wait for ready');
-      this.dota2Client.on('practiceLobbyUpdate', () => {
+      logger.debug('waitForReady - Started');
+      const checkForReadyListener = (lobbyState): void => {
+        this.lobbyState = lobbyState;
+
+        logger.debug('waitForReady - practiceLobbyUpdate');
         this.lobbyState.all_members.forEach((lobbyPlayer) => {
           const lobbyPlayerID = lobbyPlayer.id.toString();
-          if (
-            this.steamIDreadyStateMap.get(lobbyPlayerID) === false &&
-            lobbyPlayer.slot !== null
-          ) {
-            this.steamIDreadyStateMap.set(lobbyPlayerID, true);
+          const player = this.steamIDplayerMap.get(lobbyPlayerID);
+          if (player && player.ready === false && lobbyPlayer.slot !== null) {
+            player.ready = true;
+            this.steamIDplayerMap.set(lobbyPlayerID, player);
           }
-          return true;
         });
-        const allReady = [...this.steamIDreadyStateMap.values()].every(
-          (state: boolean) => state === true
+
+        const currentPlayerReadyState: Partial<Player>[] = [
+          ...this.steamIDplayerMap.values(),
+        ].map((player) => ({
+          id: player.id,
+          ready: player.ready,
+        }));
+        const createLobbyProgressType = {
+          progressType: 'waitingForPlayers',
+          lobbyID,
+          progressValue: 50,
+          progressMessage: lobbyUpdateEventMessages.waiting,
+          players: currentPlayerReadyState,
+        };
+        job.updateProgress(createLobbyProgressType);
+
+        const allReady = [...this.steamIDplayerMap.values()].every(
+          (player: Player) => player.ready === true
         );
         if (allReady) {
+          logger.debug('waitForReady - allReady');
+          this.dota2Client.removeListener(
+            'practiceLobbyUpdate',
+            checkForReadyListener
+          );
           resolve(true);
+          logger.debug('waitForReady - Completed');
         }
-      });
+      };
+
+      this.dota2Client.on('practiceLobbyUpdate', checkForReadyListener);
       return setTimeout(
         () => reject(new Error('Players not Ready within 20 seconds ! ')),
         20000
       );
-    });
-  }
-
-  public invitePlayers(players: Player[]): Promise<boolean> {
-    return new Promise<boolean>((resolve, reject) => {
-      if (!this.isReady) {
-        logger.debug('DOTA 2 Bot not ready');
-        return reject(new Error('DOTA 2 Bot not ready'));
-      }
-      if (!this.lobbyReady) {
-        logger.debug('Lobby not ready');
-        return reject(new Error('Lobby not Ready'));
-      }
-      players.forEach((player) => {
-        this.dota2Client.inviteToLobby(player.steamID);
-        this.steamIDreadyStateMap.set(player.steamID, false);
-      });
-      return resolve(true);
     });
   }
 
