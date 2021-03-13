@@ -44,6 +44,10 @@ export default class Lobby {
     this.lobbyID = randomBytes(5).toString('hex');
   }
 
+  public getPlayers(): Player[] {
+    return [...this.radiant, ...this.dire];
+  }
+
   public async start(): Promise<void> {
     await createLobby([...this.radiant, ...this.dire], this.lobbyID);
   }
