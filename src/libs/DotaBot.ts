@@ -103,8 +103,23 @@ export default class DotaBot {
     });
   }
 
-  public waitForReady(): Promise<boolean> {
+  public invitePlayers(players: Player[]): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
+      if (!this.isReady) {
+        logger.debug('DOTA 2 Bot not ready');
+        return reject(new Error('DOTA 2 Bot not ready'));
+      }
+      if (!this.lobbyReady) {
+        logger.debug('Lobby not ready');
+        return reject(new Error('Lobby not Ready'));
+      }
+      players.forEach((player) => {
+        this.dota2Client.inviteToLobby(player.steamID);
+        this.steamIDplayerMap.set(player.steamID, player);
+      });
+      return resolve(true);
+    });
+  }
       if (this.lobbyState === undefined) {
         return reject(new Error('Lobby State not Found'));
       }
