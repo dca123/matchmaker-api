@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node-dev src/app.ts --watch ",
+    "dev": "ts-node-dev -r tsconfig-paths/register src/app.ts --watch ",
     "lint": "eslint src/**/*.ts",
+    "type-check": "tsc --project tsconfig.json --pretty --noEmit",
     "format": "eslint src/**/*.ts --fix",
     "start": "node dist/app.js",
     "clean": "rm -rf ./dist/*",
@@ -19,18 +20,21 @@
     "@types/node": "^14.14.31",
     "@types/pino": "^6.3.6",
     "@typescript-eslint/eslint-plugin": "^4.15.2",
-    "@typescript-eslint/parser": "^4.15.2",
+    "@typescript-eslint/parser": "^4.17.0",
     "bull-repl": "^0.26.3",
     "commitizen": "^4.2.3",
     "cz-conventional-changelog": "3.3.0",
     "eslint": "^7.20.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-config-prettier": "^8.0.0",
+    "eslint-import-resolver-typescript": "^2.4.0",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-prettier": "^3.3.1",
+    "module-alias": "^2.2.2",
     "nodemon": "^2.0.7",
     "prettier": "2.2.1",
     "ts-node-dev": "^1.1.6",
+    "tsconfig-paths": "^3.9.0",
     "typescript": "^4.2.2"
   },
   "config": {
@@ -50,5 +54,25 @@
     "pino-pretty": "^4.7.0",
     "socket.io": "^3.1.1",
     "steam": "^1.4.1"
+  },
+  "_moduleAliases": {
+    "@/libs": [
+      "dist/src/libs/*"
+    ],
+    "@/loaders": [
+      "dist/src/loaders"
+    ],
+    "@/sockets": [
+      "dist/src/sockets"
+    ],
+    "@/workers": [
+      "dist/src/workers"
+    ],
+    "@config": [
+      "dist/src/config.ts"
+    ],
+    "@index": [
+      "dist/src/index.ts"
+    ]
   }
 }
