@@ -61,7 +61,7 @@ createLobbyEvents.on('progress', (event: createLobbyEventsType) => {
       );
       io.of('/lobby')
         .to(lobbyID)
-        .emit('lobbyState', progressValue, progressMessage, true);
+        .emit('lobbyTimeout', progressValue, progressMessage, true);
       break;
     default:
       break;
