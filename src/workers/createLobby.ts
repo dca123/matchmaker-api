@@ -10,13 +10,14 @@ export type createLobbyProgressType = {
   progressMessage: string | object;
 };
 
-const lobbyUpdateEventMessages = {
+export const lobbyUpdateEventMessages = {
   creating: 'Creating Lobby',
   inviting: 'Inviting Players',
   waiting: 'Waiting on Players to Join',
   starting: 'Starting Match',
   timeOut: 'Failed to Ready Up',
   initializing: 'Waiting on the Ancients',
+  lobbyLaunched: 'Match Started',
 };
 
 export default new Worker(
@@ -94,7 +95,15 @@ export default new Worker(
           );
           await bot.launchLobby();
           logger.debug('Launched lobby');
+
           await bot.leaveLobby();
+          job.updateProgress(
+            createLobbyProgressMessage(
+              'lobbyState',
+              100,
+              lobbyUpdateEventMessages.lobbyLaunched
+            )
+          );
         } catch (err) {
           logger.debug('Players not ready');
           jobReturn.lobbyTimeout = true;
@@ -105,6 +114,7 @@ export default new Worker(
               lobbyUpdateEventMessages.timeOut
             )
           );
+
           await bot.destroyLobby();
           logger.debug('Deleted Lobby');
         } finally {
