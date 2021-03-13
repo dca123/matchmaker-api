@@ -73,19 +73,16 @@ export default class DotaBot {
       if (this.isReady) {
         this.dota2Client.createPracticeLobby(
           { ...lobbyConfig, game_name: `Lobby ${lobbyID}` },
-          (err, body) => {
+          (err) => {
             if (err) {
               return reject(new Error(err));
             }
-            logger.debug(JSON.stringify(body));
             this.lobbyReady = true;
             this.dota2Client.joinPracticeLobbyTeam(1, 4);
-            this.dota2Client.on('practiceLobbyUpdate', (lobby) => {
-              logger.debug('lobby update message arrived');
-              if (this.lobbyState === undefined) {
-                resolve(true);
-              }
+            this.dota2Client.once('practiceLobbyUpdate', (lobby) => {
+              logger.debug('create lobby - practiceLobbyUpdate received');
               this.lobbyState = lobby;
+              resolve(true);
             });
             return setTimeout(
               () =>
