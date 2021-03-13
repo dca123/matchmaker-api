@@ -1,10 +1,19 @@
 import steam from 'steam';
 import dota2 from 'dota2';
 import { Job } from 'bullmq';
-import { lobbyUpdateEventMessages } from '../workers/createLobby';
-import { Player } from './Lobby';
-import { lobbyConfig } from '../config';
-import logger from '../loaders/logger';
+import { lobbyConfig } from 'config';
+import logger from '@/loaders/logger';
+import { Player } from 'types/global';
+
+export const lobbyUpdateEventMessages = {
+  creating: 'Creating Lobby',
+  inviting: 'Inviting Players',
+  waiting: 'Waiting on Players to Join',
+  starting: 'Starting Match',
+  timeOut: 'Failed to Ready Up',
+  initializing: 'Waiting on the Ancients',
+  lobbyLaunched: 'Match Started',
+};
 
 const lobbyChannelType =
   dota2.schema.DOTAChatChannelType_t.DOTAChannelType_Lobby;

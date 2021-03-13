@@ -1,28 +1,8 @@
 import { Worker, Job } from 'bullmq';
 import Redis from 'ioredis';
-import DotaBot from '../libs/DotaBot';
-import logger from '../loaders/logger';
-
-export type createLobbyProgressType = {
-  progressType: 'waitingForPlayers' | 'lobbyState' | 'lobbyTimeout';
-  progressValue: number;
-  lobbyID: string;
-  progressMessage: string | object;
-  players?: {
-    username: string;
-    ready: boolean;
-  }[];
-};
-
-export const lobbyUpdateEventMessages = {
-  creating: 'Creating Lobby',
-  inviting: 'Inviting Players',
-  waiting: 'Waiting on Players to Join',
-  starting: 'Starting Match',
-  timeOut: 'Failed to Ready Up',
-  initializing: 'Waiting on the Ancients',
-  lobbyLaunched: 'Match Started',
-};
+import DotaBot, { lobbyUpdateEventMessages } from '@/libs/DotaBot';
+import logger from '@/loaders/logger';
+import { createLobbyProgressType } from 'types/global';
 
 export default new Worker(
   'createLobby',

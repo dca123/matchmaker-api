@@ -1,6 +1,7 @@
+import { Player } from 'types/global';
 import Ticket from './Ticket';
 import PlayerToTicketBiMap from './PlayerToTicketBiMap';
-import Lobby, { Player } from './Lobby';
+import Lobby from './Lobby';
 
 export default class SearchQueue {
   private ticketMap: Map<string, Ticket> = new Map();

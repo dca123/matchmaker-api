@@ -1,14 +1,8 @@
 import { randomBytes } from 'crypto';
+import { Player, Team } from 'types/global';
 import createLobby from './DotaBotWorkflows';
 import Ticket from './Ticket';
 
-export interface Player {
-  id: string;
-  ready: boolean;
-  steamID: string;
-}
-
-type Team = Array<Player>;
 /**
  * @description Converts a given array of tickets to a Team
  * @param {Ticket[]} tickets - Array of Tickets
