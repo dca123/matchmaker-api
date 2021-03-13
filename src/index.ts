@@ -8,7 +8,7 @@ import logger from './loaders/logger';
 import { createLobbyQueue, lobbyIDjobIDMap } from './libs/DotaBotWorkflows';
 import SearchQueue from './libs/SearchQueue';
 import Ticket from './libs/Ticket';
-import { Player } from './libs/Lobby';
+import Lobby, { Player } from './libs/Lobby';
 import { createLobbyProgressType } from './workers/createLobby';
 
 const port = process.env.PORT ?? 3000;
@@ -16,6 +16,7 @@ const app = express();
 const queue = new SearchQueue();
 const httpServer = createServer(app);
 const playerMap = new Map<string, Player>();
+const lobbyIDlobbyMap = new Map<string, Lobby>();
 
 const io = new Server(httpServer, {
   cors: {
@@ -96,6 +97,7 @@ io.of('/lobby').on('connection', async (socket: lobbySocket) => {
   socket.join(lobbyID);
 
   if (lobbyIDjobIDMap.get(lobbyID)) {
+    io.of('/lobby').to(lobbyID).emit('playerList', lobby.getPlayers());
     const job = await Job.fromId(
       createLobbyQueue,
       lobbyIDjobIDMap.get(lobbyID)
@@ -125,6 +127,7 @@ setInterval(() => {
     tickets.forEach((ticket: Ticket) => {
       logger.debug('Emmiting lobby id to %s', ticket.ticketID);
       ticketLobbyMap.set(ticket.ticketID, lobby.lobbyID);
+      lobbyIDlobbyMap.set(lobby.lobbyID, lobby);
       io.of('/searching').to(ticket.ticketID).emit('lobbyFound', lobby.lobbyID);
     });
     lobby.start().catch((err) => logger.fatal(err));
