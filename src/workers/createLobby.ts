@@ -8,6 +8,10 @@ export type createLobbyProgressType = {
   progressValue: number;
   lobbyID: string;
   progressMessage: string | object;
+  players?: {
+    username: string;
+    ready: boolean;
+  }[];
 };
 
 export const lobbyUpdateEventMessages = {
@@ -84,12 +88,13 @@ export default new Worker(
             )
           );
           logger.debug('Waiting for players');
-          await bot.waitForReady();
+          await bot.waitForReady(job, lobbyID);
           logger.debug('All players ready');
+
           job.updateProgress(
             createLobbyProgressMessage(
               'lobbyState',
-              100,
+              90,
               lobbyUpdateEventMessages.starting
             )
           );
