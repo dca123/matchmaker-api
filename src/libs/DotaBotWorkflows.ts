@@ -41,8 +41,19 @@ const createLobbyEvents = new QueueEvents('createLobby', {
 createLobbyEvents.on('progress', (event: createLobbyEventsType) => {
   const { progressType, lobbyID, progressValue, progressMessage } = event.data;
   switch (progressType) {
-    case 'waitingForPlayers':
+    case 'waitingForPlayers': {
+      // Write in block avoid no-case-declarations
+      const { players } = event.data;
+      logger.debug(
+        'Emiting waitingForPlayers update %O to lobby %s',
+        [progressValue, progressMessage, players],
+        lobbyID
+      );
+      io.of('/lobby')
+        .to(lobbyID)
+        .emit('waitingForPlayers', progressValue, progressMessage, players);
       break;
+    }
     case 'lobbyState':
       logger.debug(
         'Emiting lobbyState update %O to lobby %s',
