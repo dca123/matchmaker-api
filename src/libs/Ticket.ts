@@ -1,6 +1,7 @@
 import { randomBytes } from 'crypto';
+import { Ticket } from 'types/global';
 
-export default class Ticket {
+export default class implements Ticket {
   public playerID: string;
 
   public ticketID: string;

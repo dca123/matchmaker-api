@@ -1,22 +1,37 @@
+/* eslint-disable no-unused-vars */
 import { Socket } from 'socket.io';
-import Ticket from '@/libs/Ticket';
+import { Job } from 'bullmq';
 
-export type ticketSocket = Socket & {
+export interface Ticket {
+  playerID: string;
+
+  ticketID: string;
+
+  createdAt: number;
+
+  status: string;
+}
+
+export declare interface ticketSocket extends Socket {
+  handshake: Socket['handshake'] & {
   auth: {
-    ticket: Ticket;
+      ticket: {
+        ticketID: string;
+      };
+    };
   };
   ticketID: string;
-};
+}
 
-export type lobbySocket = ticketSocket & {
+export interface lobbySocket extends ticketSocket {
   lobbyID: string;
-};
+}
 
 export type createLobbyProgressType = {
   progressType: 'waitingForPlayers' | 'lobbyState' | 'lobbyTimeout';
   progressValue: number;
   lobbyID: string;
-  progressMessage: string | object;
+  progressMessage: string | Record<string, unknown>;
   players?: {
     username: string;
     ready: boolean;
