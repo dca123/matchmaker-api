@@ -1,9 +1,75 @@
 import { createLobbyQueue } from '@/libs/DotaBotWorkflows';
-import Lobby from '@/libs/Lobby';
 import logger from '@/loaders/logger';
 import { Job } from 'bullmq';
 import { Namespace, Server } from 'socket.io';
-import { createLobbyProgressType, lobbySocket } from 'types/global';
+import { createLobbyProgressType, lobbySocket, Lobby } from 'types/global';
+
+async function onConnection(
+  io: Namespace,
+  socket: lobbySocket,
+  lobbyIDjobIDMap: Map<string, string>,
+  lobbyIDlobbyMap: Map<string, Lobby>
+): Promise<void> {
+  const { lobbyID } = socket;
+  logger.debug('/Lobby - Joining lobby room %s', socket.lobbyID);
+  await socket.join(lobbyID);
+
+  // If lobby exists when the socket is connected, emit the player list and the latest lobby progress
+  if (lobbyIDjobIDMap.has(lobbyID)) {
+    const lobby = lobbyIDlobbyMap.get(lobbyID);
+
+    // Emit list of players
+    logger.debug(
+      '/Lobby - Emiting player list to %s with list %O',
+      socket.ticketID.slice(0, 10),
+      lobby.getPlayers()
+    );
+    io.to(lobbyID).emit('playerList', lobby.getPlayers());
+
+    // Get latest job progress of the lobby creation process
+    const job: Job = await Job.fromId(
+      createLobbyQueue,
+      lobbyIDjobIDMap.get(lobbyID)
+    );
+    const {
+      progressValue,
+      progressMessage,
+      progressType,
+    } = job.progress as createLobbyProgressType;
+
+    logger.debug(
+      '/Lobby - Emiting lobbyTimeout %O to lobby %s',
+      [progressValue, progressMessage, lobby.getPlayers()],
+      lobbyID
+    );
+    switch (progressType) {
+      case 'lobbyState':
+        io.to(lobbyID).emit('lobbyState', progressValue, progressMessage);
+        break;
+
+      case 'lobbyTimeout':
+        io.to(lobbyID).emit(
+          'lobbyTimeout',
+          progressValue,
+          progressMessage,
+          true
+        );
+        break;
+
+      case 'waitingForPlayers':
+        io.to(lobbyID).emit(
+          'waitingForPlayers',
+          progressValue,
+          progressMessage,
+          lobby.getPlayers()
+        );
+        break;
+
+      default:
+        break;
+    }
+  }
+}
 
 export default function lobbyNamespace(io: Server): Namespace {
   return io.of('/lobby');
@@ -30,65 +96,10 @@ export function setupConnection(
   lobbyIDjobIDMap: Map<string, string>,
   lobbyIDlobbyMap: Map<string, Lobby>
 ): void {
-  io.on('connection', async (socket: lobbySocket) => {
-    const { lobbyID } = socket;
-    logger.debug('/Lobby - Joining lobby room %s', socket.lobbyID);
-    socket.join(lobbyID);
-
-    // If lobby exists when the socket is connected, emit the player list and the latest lobby progress
-    if (lobbyIDjobIDMap.has(lobbyID)) {
-      const lobby = lobbyIDlobbyMap.get(lobbyID);
-
-      // Emit list of players
-      logger.debug(
-        '/Lobby - Emiting player list to %s with list %O',
-        socket.ticketID.slice(0, 10),
-        lobby.getPlayers()
-      );
-      io.to(lobbyID).emit('playerList', lobby.getPlayers());
-
-      // Get latest job progress of the lobby creation process
-      const job = await Job.fromId(
-        createLobbyQueue,
-        lobbyIDjobIDMap.get(lobbyID)
-      );
-      const {
-        progressValue,
-        progressMessage,
-        progressType,
-      } = job.progress as createLobbyProgressType;
-
-      logger.debug(
-        '/Lobby - Emiting lobbyTimeout %O to lobby %s',
-        [progressValue, progressMessage, lobby.getPlayers()],
-        lobbyID
-      );
-      switch (progressType) {
-        case 'lobbyState':
-          io.to(lobbyID).emit('lobbyState', progressValue, progressMessage);
-          break;
-
-        case 'lobbyTimeout':
-          io.to(lobbyID).emit(
-            'lobbyTimeout',
-            progressValue,
-            progressMessage,
-            true
-          );
-          break;
-
-        case 'waitingForPlayers':
-          io.to(lobbyID).emit(
-            'waitingForPlayers',
-            progressValue,
-            progressMessage,
-            lobby.getPlayers()
-          );
-          break;
-
-        default:
-          break;
-      }
-    }
+  io.on('connection', (socket: lobbySocket) => {
+    onConnection(io, socket, lobbyIDjobIDMap, lobbyIDlobbyMap).then(
+      () => logger.debug('Lobby connection to %s established', socket.ticketID),
+      () => logger.debug('Lobby connection to %s failed', socket.ticketID)
+    );
   });
 }
