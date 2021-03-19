@@ -14,7 +14,7 @@ export interface Ticket {
 
 export declare interface ticketSocket extends Socket {
   handshake: Socket['handshake'] & {
-  auth: {
+    auth: {
       ticket: {
         ticketID: string;
       };
@@ -71,3 +71,22 @@ export type SearchQueueList = {
   sea: SearchQueue;
 };
 
+export interface createLobbyJob extends Job {
+  returnvalue: {
+    lobbyTimeout: boolean;
+  };
+  data: {
+    lobbyID: string;
+    players: Player[];
+    coaches?: Player[];
+  };
+}
+
+export interface Request {
+  body: {
+    playerID: string;
+    steamID: string;
+    roleSelection: string;
+    serverSelection: string;
+  };
+}
