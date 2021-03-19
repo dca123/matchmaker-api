@@ -1,28 +1,57 @@
-import { Player } from 'types/global';
+import { Player, SearchQueue } from 'types/global';
 import Ticket from './Ticket';
 import PlayerToTicketBiMap from './PlayerToTicketBiMap';
 import Lobby from './Lobby';
 
-export default class SearchQueue {
-  private ticketMap: Map<string, Ticket> = new Map();
+export default class implements SearchQueue {
+  private ticketMap: Map<string, Ticket> = new Map<string, Ticket>();
 
   private playerToTicketIDs = new PlayerToTicketBiMap();
 
-  private queue: Array<string> = [];
+  private playerQueue: Array<string> = [];
 
-  public enqueue(playerID: string): string {
-    if (!this.playerToTicketIDs.hasPlayerID(playerID)) {
-      const newTicket = new Ticket(playerID);
-      this.queue = [...this.queue, newTicket.ticketID];
-      this.playerToTicketIDs.set(playerID, newTicket.ticketID);
-      this.ticketMap.set(newTicket.ticketID, newTicket);
-      return newTicket.ticketID;
-    }
-    throw new Error(`Player ${playerID} is already in the queue`);
+  private coachQueue: Array<string> = [];
+
+  private region: string;
+
+  constructor(region: string) {
+    this.region = region;
   }
 
-  public dequeue(count = 10): Ticket[] {
-    const dequeuedTicketsIDs = this.queue.splice(0, count);
+  public enqueue(playerID: string, roleSelection: string): string {
+    if (!this.playerToTicketIDs.hasPlayerID(playerID)) {
+      switch (roleSelection) {
+        case 'player': {
+          const newTicket = new Ticket(playerID);
+          this.playerQueue.push(newTicket.ticketID);
+          this.playerToTicketIDs.set(playerID, newTicket.ticketID);
+          this.ticketMap.set(newTicket.ticketID, newTicket);
+          return newTicket.ticketID;
+        }
+        case 'coach': {
+          const newTicket = new Ticket(playerID);
+          this.coachQueue.push(newTicket.ticketID);
+          this.playerToTicketIDs.set(playerID, newTicket.ticketID);
+          this.ticketMap.set(newTicket.ticketID, newTicket);
+          return newTicket.ticketID;
+        }
+        default:
+          throw new Error('Invalid Role Selection');
+      }
+    }
+    throw new Error(`Player ${playerID} is already in the playerQueue`);
+  }
+
+  public dequeuePlayers(count = 10): Ticket[] {
+    const dequeuedTicketsIDs = this.playerQueue.splice(0, count);
+    dequeuedTicketsIDs.forEach((ticketID) =>
+      this.playerToTicketIDs.deleteByTicket(ticketID)
+    );
+    return dequeuedTicketsIDs.map((ticketID) => this.ticketMap.get(ticketID));
+  }
+
+  public dequeueCoaches(count = 2): Ticket[] {
+    const dequeuedTicketsIDs = this.playerQueue.splice(0, count);
     dequeuedTicketsIDs.forEach((ticketID) =>
       this.playerToTicketIDs.deleteByTicket(ticketID)
     );
@@ -33,19 +62,24 @@ export default class SearchQueue {
     playerMap: Map<string, Player>
   ): [Lobby, Ticket[]] | [false] {
     // Meet conditions
-    if (this.queue.length >= 1) {
-      const lobbyTickets = this.dequeue(1);
-      const newLobby = new Lobby(lobbyTickets, playerMap);
-      return [newLobby, lobbyTickets];
+    const lobbySize = parseInt(process.env.LOBBY_SIZE ?? '10', 10);
+    if (this.playerQueue.length >= lobbySize) {
+      const playerTickets = this.dequeuePlayers(lobbySize);
+      let coachTickets: Ticket[] = [];
+      if (this.coachQueue.length >= 2) {
+        coachTickets = this.dequeueCoaches(2);
+      }
+      const newLobby = new Lobby(playerMap, playerTickets, coachTickets);
+      return [newLobby, [...playerTickets, ...coachTickets]];
     }
     return [false];
   }
 
   public peek(): Ticket {
-    return this.ticketMap.get(this.queue[0]);
+    return this.ticketMap.get(this.playerQueue[0]);
   }
 
   public size(): number {
-    return this.queue.length;
+    return this.playerQueue.length;
   }
 }
