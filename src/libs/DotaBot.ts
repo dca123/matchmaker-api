@@ -1,10 +1,29 @@
+/* eslint-disable @typescript-eslint/restrict-template-expressions */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import steam from 'steam';
 import dota2 from 'dota2';
 import { Job } from 'bullmq';
-import { lobbyUpdateEventMessages } from '../workers/createLobby';
-import { Player } from './Lobby';
-import { lobbyConfig } from '../config';
-import logger from '../loaders/logger';
+import { lobbyConfig } from 'config';
+import logger from '@/loaders/logger';
+import { Player } from 'types/global';
+
+enum LOBBY_TEAM {
+  RADIANT = 0,
+  DIRE = 1,
+  COACH = 3,
+}
+
+export const lobbyUpdateEventMessages = {
+  creating: 'Creating Lobby',
+  inviting: 'Inviting Players',
+  waiting: 'Waiting on Players to Join',
+  starting: 'Starting Match',
+  timeOut: 'Failed to Ready Up',
+  initializing: 'Waiting on the Ancients',
+  lobbyLaunched: 'Match Started',
+};
 
 const lobbyChannelType =
   dota2.schema.DOTAChatChannelType_t.DOTAChannelType_Lobby;
@@ -20,11 +39,13 @@ export default class DotaBot {
 
   private dota2Client;
 
-  private isReady: boolean = false;
+  private isReady = false;
 
-  private lobbyReady: boolean = false;
+  private lobbyReady = false;
 
   private lobbyState;
+
+  private lobbyChannel;
 
   private steamIDplayerMap = new Map<string, Player>();
 
@@ -84,6 +105,8 @@ export default class DotaBot {
             this.dota2Client.once('practiceLobbyUpdate', (lobby) => {
               logger.debug('create lobby - practiceLobbyUpdate received');
               this.lobbyState = lobby;
+              this.lobbyChannel = `Lobby_${this.lobbyState.lobby_id}`;
+              this.dota2Client.joinChat(this.lobbyChannel, lobbyChannelType);
               resolve(true);
             });
             return setTimeout(
@@ -127,16 +150,44 @@ export default class DotaBot {
       }
 
       logger.debug('waitForReady - Started');
-      const checkForReadyListener = (lobbyState): void => {
+      const checkForReadyListener = async (lobbyState): Promise<void> => {
         this.lobbyState = lobbyState;
 
         logger.debug('waitForReady - practiceLobbyUpdate');
         this.lobbyState.all_members.forEach((lobbyPlayer) => {
           const lobbyPlayerID = lobbyPlayer.id.toString();
           const player = this.steamIDplayerMap.get(lobbyPlayerID);
+          logger.debug('Player - %O in %s', player, lobbyPlayer.team);
           if (player && player.ready === false && lobbyPlayer.slot !== null) {
-            player.ready = true;
-            this.steamIDplayerMap.set(lobbyPlayerID, player);
+            if (!player.isCoach) {
+              if (
+                lobbyPlayer.team === LOBBY_TEAM.RADIANT ||
+                lobbyPlayer.team === LOBBY_TEAM.DIRE
+              ) {
+                logger.debug('SCICCESS');
+                player.ready = true;
+                this.steamIDplayerMap.set(lobbyPlayerID, player);
+              } else {
+                logger.debug('%s, please join Radiant or Dire', player.id);
+                this.dota2Client.sendMessage(
+                  `${player.id}, please join Radiant or Dire`,
+                  this.lobbyChannel,
+                  lobbyChannelType
+                );
+                // Send message to join a player team
+              }
+            } else if (lobbyPlayer.team === LOBBY_TEAM.COACH) {
+              player.ready = true;
+              this.steamIDplayerMap.set(lobbyPlayerID, player);
+            } else {
+              logger.debug('%s, please join a coach slot', player.id);
+              this.dota2Client.sendMessage(
+                `${player.id}, please join a coach slot`,
+                this.lobbyChannel,
+                lobbyChannelType
+              );
+              // Send message to join a player team
+            }
           }
         });
 
@@ -153,7 +204,7 @@ export default class DotaBot {
           progressMessage: lobbyUpdateEventMessages.waiting,
           players: currentPlayerReadyState,
         };
-        job.updateProgress(createLobbyProgressType);
+        await job.updateProgress(createLobbyProgressType);
 
         const allReady = [...this.steamIDplayerMap.values()].every(
           (player: Player) => player.ready === true
@@ -215,8 +266,7 @@ export default class DotaBot {
 
   public leaveLobby(): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
-      const lobbyChannel = `Lobby_${this.lobbyState.lobby_id}`;
-      this.dota2Client.leaveChat(lobbyChannel, lobbyChannelType);
+      this.dota2Client.leaveChat(this.lobbyChannel, lobbyChannelType);
       this.dota2Client.leavePracticeLobby((err) => {
         if (err) {
           return reject(new Error(err));

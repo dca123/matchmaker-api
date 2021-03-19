@@ -8,12 +8,18 @@
     "lib": ["ES6"],
     "noImplicitAny": false,
     "moduleResolution": "node",
+    "noUnusedParameters": true,
     "sourceMap": true,
     "outDir": "dist",
-    "baseUrl": ".",
+    "baseUrl": "./src",
     "paths": {
-      "*": ["node_modules/*", "src/types/*"]
+      "@/libs/*": ["libs/*"],
+      "@/loaders/*": ["loaders/*"],
+      "@/sockets/*": ["sockets/*"],
+      "@/workers/*": ["workers/*"],
+      "@config": ["config.ts"],
+      "@index": ["index.ts"],
     }
-  },
-  "include": ["src/**/*"]
+  },  
+  "include": ["**/*.ts"]
 }

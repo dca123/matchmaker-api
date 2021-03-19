@@ -1,45 +1,26 @@
-import { Worker, Job } from 'bullmq';
+import { Worker } from 'bullmq';
 import Redis from 'ioredis';
-import DotaBot from '../libs/DotaBot';
-import logger from '../loaders/logger';
-
-export type createLobbyProgressType = {
-  progressType: 'waitingForPlayers' | 'lobbyState' | 'lobbyTimeout';
-  progressValue: number;
-  lobbyID: string;
-  progressMessage: string | object;
-  players?: {
-    username: string;
-    ready: boolean;
-  }[];
-};
-
-export const lobbyUpdateEventMessages = {
-  creating: 'Creating Lobby',
-  inviting: 'Inviting Players',
-  waiting: 'Waiting on Players to Join',
-  starting: 'Starting Match',
-  timeOut: 'Failed to Ready Up',
-  initializing: 'Waiting on the Ancients',
-  lobbyLaunched: 'Match Started',
-};
+import DotaBot, { lobbyUpdateEventMessages } from '@/libs/DotaBot';
+import logger from '@/loaders/logger';
+import { createLobbyJob, createLobbyProgressType } from 'types/global';
 
 export default new Worker(
   'createLobby',
-  async (job: Job) => {
-    const { players, lobbyID } = job.data;
-
+  async (job: createLobbyJob) => {
+    logger.info('createLobby job #%s started', job.id);
+    const { lobbyID, players, coaches } = job.data;
     const createLobbyProgressMessage = (
       progressType: 'waitingForPlayers' | 'lobbyState' | 'lobbyTimeout',
       progressValue: number,
-      progressMessage: string | Object
+      progressMessage: string | Record<string, unknown>
     ): Partial<createLobbyProgressType> => ({
       progressType,
       lobbyID,
       progressValue,
       progressMessage,
     });
-    job.updateProgress(
+
+    await job.updateProgress(
       createLobbyProgressMessage(
         'lobbyState',
         10,
@@ -59,7 +40,7 @@ export default new Worker(
         logger.debug('Dota ready');
 
         logger.trace('Creating lobby for players - %O', players);
-        job.updateProgress(
+        await job.updateProgress(
           createLobbyProgressMessage(
             'lobbyState',
             20,
@@ -69,7 +50,7 @@ export default new Worker(
         await bot.createLobby(lobbyID);
         logger.debug('Lobby created');
 
-        job.updateProgress(
+        await job.updateProgress(
           createLobbyProgressMessage(
             'lobbyState',
             30,
@@ -77,10 +58,13 @@ export default new Worker(
           )
         );
         await bot.invitePlayers(players);
+        if (coaches !== undefined) {
+          await bot.invitePlayers(coaches);
+        }
         logger.debug('Players Invited');
 
         try {
-          job.updateProgress(
+          await job.updateProgress(
             createLobbyProgressMessage(
               'lobbyState',
               40,
@@ -91,7 +75,7 @@ export default new Worker(
           await bot.waitForReady(job, lobbyID);
           logger.debug('All players ready');
 
-          job.updateProgress(
+          await job.updateProgress(
             createLobbyProgressMessage(
               'lobbyState',
               90,
@@ -102,7 +86,7 @@ export default new Worker(
           logger.debug('Launched lobby');
 
           await bot.leaveLobby();
-          job.updateProgress(
+          await job.updateProgress(
             createLobbyProgressMessage(
               'lobbyState',
               100,
@@ -112,7 +96,7 @@ export default new Worker(
         } catch (err) {
           logger.debug('Players not ready');
           jobReturn.lobbyTimeout = true;
-          job.updateProgress(
+          await job.updateProgress(
             createLobbyProgressMessage(
               'lobbyTimeout',
               100,
