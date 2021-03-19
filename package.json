@@ -30,13 +30,13 @@
     "eslint-import-resolver-typescript": "^2.4.0",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-prettier": "^3.3.1",
-    "module-alias": "^2.2.2",
     "nodemon": "^2.0.7",
     "prettier": "2.2.1",
     "ts-node-dev": "^1.1.6",
     "tsconfig-paths": "^3.9.0",
     "typescript": "^4.2.2",
-    "protobufjs": "^5.0.3"
+    "protobufjs": "^5.0.3",
+    "module-alias": "^2.2.2"
   },
   "config": {
     "commitizen": {
@@ -57,23 +57,10 @@
     "steam": "^1.4.1"
   },
   "_moduleAliases": {
-    "@/libs": [
-      "dist/src/libs/*"
-    ],
-    "@/loaders": [
-      "dist/src/loaders"
-    ],
-    "@/sockets": [
-      "dist/src/sockets"
-    ],
-    "@/workers": [
-      "dist/src/workers"
-    ],
-    "@config": [
-      "dist/src/config.ts"
-    ],
-    "@index": [
-      "dist/src/index.ts"
-    ]
+    "@/libs": "dist/libs",
+    "@/loaders": "dist/loaders",
+    "@/sockets": "dist/sockets",
+    "@/workers": "dist/workers",
+    "@config": "dist/config.js"
   }
 }

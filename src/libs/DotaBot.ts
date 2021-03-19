@@ -5,7 +5,7 @@
 import steam from 'steam';
 import dota2 from 'dota2';
 import { Job } from 'bullmq';
-import { lobbyConfig } from 'config';
+import { lobbyConfig } from '@config';
 import logger from '@/loaders/logger';
 import { Player } from 'types/global';
 
