@@ -1,8 +1,8 @@
-import { Job, Queue, QueueEvents } from 'bullmq';
+import { Queue, QueueEvents } from 'bullmq';
 import Redis from 'ioredis';
 import worker from '@/workers/createLobby';
 import logger from '@/loaders/logger';
-import { createLobbyEventsType, Player } from 'types/global';
+import { createLobbyEventsType, createLobbyJob, Lobby } from 'types/global';
 import { Namespace } from 'socket.io';
 
 export const createLobbyQueue = new Queue('createLobby', {
@@ -10,17 +10,18 @@ export const createLobbyQueue = new Queue('createLobby', {
 });
 export const lobbyIDjobIDMap = new Map<string, string>();
 
-const createLobbyWorkflow = async (
-  players: Player[],
-  lobbyID: string
-): Promise<void> => {
+const createLobbyWorkflow = async (lobby: Lobby): Promise<void> => {
+  const lobbyID = lobby.getLobbyID();
   const job = await createLobbyQueue.add(`lobby #${lobbyID}`, {
-    players,
     lobbyID,
+    players: lobby.getPlayers(),
+    coaches: lobby.getCoaches(),
   });
+  logger.info('createLobby job #%s added to queue', job.id);
   lobbyIDjobIDMap.set(lobbyID, job.id);
 };
-worker.on('completed', (job: Job) => {
+
+worker.on('completed', (job: createLobbyJob) => {
   if (job.returnvalue.lobbyTimeout) {
     logger.info(`Finished job ${job.id} - Lobby create timed out due to`);
   } else {
