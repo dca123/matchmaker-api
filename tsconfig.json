@@ -9,7 +9,7 @@
     "noImplicitAny": false,
     "moduleResolution": "node",
     "noUnusedParameters": true,
-    "sourceMap": true,
+    "sourceMap": false,
     "outDir": "dist",
     "baseUrl": "./src",
     "paths": {
