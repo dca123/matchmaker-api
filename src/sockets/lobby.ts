@@ -38,7 +38,8 @@ async function onConnection(
     } = job.progress as createLobbyProgressType;
 
     logger.debug(
-      '/Lobby - Emiting lobbyTimeout %O to lobby %s',
+      `/Lobby - Emiting %s with payload %O to lobby %s`,
+      progressType,
       [progressValue, progressMessage, lobby.getPlayers()],
       lobbyID
     );

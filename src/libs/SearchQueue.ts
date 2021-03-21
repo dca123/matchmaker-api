@@ -12,10 +12,22 @@ export default class implements SearchQueue {
 
   private coachQueue: Array<string> = [];
 
-  private region: string;
+  private region: number;
 
   constructor(region: string) {
-    this.region = region;
+    switch (region) {
+      case 'us':
+        this.region = 1;
+        break;
+      case 'eu':
+        this.region = 8;
+        break;
+      case 'sea':
+        this.region = 5;
+        break;
+      default:
+        throw new Error('Server Region not defined');
+    }
   }
 
   public enqueue(playerID: string, roleSelection: string): string {
@@ -81,5 +93,9 @@ export default class implements SearchQueue {
 
   public size(): number {
     return this.playerQueue.length;
+  }
+
+  public getRegion(): number {
+    return this.region;
   }
 }

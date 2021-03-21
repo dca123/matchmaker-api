@@ -91,11 +91,15 @@ export default class DotaBot {
     });
   }
 
-  public createLobby(lobbyID: string): Promise<boolean> {
+  public createLobby(lobbyID: string, serverRegion: number): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
       if (this.isReady) {
         this.dota2Client.createPracticeLobby(
-          { ...lobbyConfig, game_name: `Lobby ${lobbyID}` },
+          {
+            ...lobbyConfig,
+            game_name: `Lobby ${lobbyID}`,
+            server_region: serverRegion,
+          },
           (err) => {
             if (err) {
               return reject(new Error(err));

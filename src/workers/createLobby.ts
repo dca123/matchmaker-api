@@ -8,7 +8,7 @@ export default new Worker(
   'createLobby',
   async (job: createLobbyJob) => {
     logger.info('createLobby job #%s started', job.id);
-    const { lobbyID, players, coaches } = job.data;
+    const { lobbyID, players, coaches, serverRegion } = job.data;
     const createLobbyProgressMessage = (
       progressType: 'waitingForPlayers' | 'lobbyState' | 'lobbyTimeout',
       progressValue: number,
@@ -47,7 +47,7 @@ export default new Worker(
             lobbyUpdateEventMessages.creating
           )
         );
-        await bot.createLobby(lobbyID);
+        await bot.createLobby(lobbyID, serverRegion);
         logger.debug('Lobby created');
 
         await job.updateProgress(

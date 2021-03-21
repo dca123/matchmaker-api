@@ -62,7 +62,8 @@ Object.entries(searchQueueList).forEach(([searchQueueName, searchQueue]) => {
           .to(ticket.ticketID)
           .emit('lobbyFound', lobby.getLobbyID());
       });
-      createLobbyWorkflow(lobby).catch((err) => logger.fatal(err));
+      const region = searchQueue.getRegion();
+      createLobbyWorkflow(lobby, region).catch((err) => logger.fatal(err));
     } else {
       logger.trace(`Finding GAME in ${searchQueueName} server`);
     }

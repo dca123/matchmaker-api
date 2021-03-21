@@ -63,6 +63,7 @@ export interface SearchQueue {
   dequeuePlayers: (count: number) => Ticket[];
   dequeueCoaches: (count: number) => Ticket[];
   createLobby: (playerMap: Map<string, Player>) => [Lobby, Ticket[]] | [false];
+  getRegion: () => number;
 }
 
 export type SearchQueueList = {
@@ -79,6 +80,7 @@ export interface createLobbyJob extends Job {
     lobbyID: string;
     players: Player[];
     coaches?: Player[];
+    serverRegion: number;
   };
 }
 

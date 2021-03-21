@@ -10,14 +10,18 @@ export const createLobbyQueue = new Queue('createLobby', {
 });
 export const lobbyIDjobIDMap = new Map<string, string>();
 
-const createLobbyWorkflow = async (lobby: Lobby): Promise<void> => {
+const createLobbyWorkflow = async (
+  lobby: Lobby,
+  serverRegion: number
+): Promise<void> => {
   const lobbyID = lobby.getLobbyID();
   const job = await createLobbyQueue.add(`lobby #${lobbyID}`, {
     lobbyID,
     players: lobby.getPlayers(),
     coaches: lobby.getCoaches(),
+    serverRegion,
   });
-  logger.info('createLobby job #%s added to queue', job.id);
+  logger.info('NJFJDNGJDN job #%s added to queue', job.id);
   lobbyIDjobIDMap.set(lobbyID, job.id);
 };
 
