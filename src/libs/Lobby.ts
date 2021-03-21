@@ -37,7 +37,7 @@ export default class implements Lobby {
   constructor(
     playerMap: Map<string, Player>,
     playerTickets: Ticket[],
-    coachTickets?: Ticket[]
+    coachTickets: Ticket[]
   ) {
     this.radiant = ticketsToTeam(playerTickets.slice(0, 5), playerMap);
     this.dire = ticketsToTeam(playerTickets.slice(5, 10), playerMap);
